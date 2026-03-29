@@ -2,681 +2,228 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Serene — Find Your Calm</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #0b0d12;
+  --surface:  #12151d;
+  --surface2: #1a1f2e;
+  --border:   rgba(255,255,255,0.09);
+  --text:     #f0ede6;
+  --muted:    rgba(240,237,230,0.65);
+  --faint:    rgba(240,237,230,0.32);
+  --purple:   #b89af5;
+  --purple-d: #8b5cf6;
+  --blue:     #7ec8f8;
+  --blue-d:   #3a7ec4;
+  --green:    #6dddb8;
+  --green-d:  #3aaa82;
+  --amber:    #f0c070;
+  --amber-d:  #c48e35;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'DM Sans', sans-serif;
+}
+html { height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100%; }
 
-  :root {
-    --bg:        #0b0d12;
-    --surface:   #12151d;
-    --surface2:  #181c26;
-    --border:    rgba(255,255,255,0.07);
-    --text:      #e8e6df;
-    --muted:     rgba(232,230,223,0.45);
-    --faint:     rgba(232,230,223,0.18);
+/* AMBIENT */
+.ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0; transition: opacity 1.2s, background-color 1.2s; }
+.orb1 { width: 520px; height: 520px; top: -180px; left: -180px; }
+.orb2 { width: 440px; height: 440px; bottom: -140px; right: -80px; }
+.orb3 { width: 260px; height: 260px; top: 40%; left: 50%; transform: translate(-50%,-50%); }
+canvas#particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .35; }
 
-    --purple:    #9b7fe8;
-    --purple-d:  #7c5dc7;
-    --blue:      #5ea8f0;
-    --blue-d:    #3a7ec4;
-    --green:     #5ecfa8;
-    --green-d:   #3aaa82;
-    --amber:     #e8b45e;
-    --amber-d:   #c48e35;
-    --rose:      #e87e8a;
+/* APP SHELL */
+.app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
 
-    --font-display: 'Cormorant Garamond', Georgia, serif;
-    --font-body:    'DM Sans', sans-serif;
-  }
+/* SIDEBAR */
+.sidebar {
+  flex: 0 0 64px;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 0; gap: 4px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky; top: 0; height: 100vh; z-index: 20;
+}
+.sidebar-logo { font-family: var(--font-display); font-size: 20px; color: var(--purple); margin-bottom: 18px; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: .12em; }
+.nav-btn { width: 42px; height: 42px; border-radius: 11px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s, transform .15s; color: rgba(240,237,230,.38); font-size: 17px; position: relative; }
+.nav-btn:hover { background: rgba(255,255,255,.07); color: var(--text); transform: scale(1.08); }
+.nav-btn.active { background: rgba(184,154,245,.18); color: var(--purple); }
+.pip { position: absolute; right: 6px; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--purple); opacity: 0; transition: opacity .2s; }
+.nav-btn.active .pip { opacity: 1; }
+.nav-tip { position: absolute; left: calc(100% + 10px); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; font-size: 11px; color: var(--text); white-space: nowrap; pointer-events: none; opacity: 0; transform: translateX(-4px); transition: opacity .15s, transform .15s; z-index: 100; }
+.nav-btn:hover .nav-tip { opacity: 1; transform: translateX(0); }
 
-  html, body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    height: 100%;
-    overflow: hidden;
-  }
+/* MAIN */
+.main { flex: 1; position: relative; overflow: hidden; }
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 48px 48px; opacity: 0; transform: translateY(20px); transition: opacity .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1); pointer-events: none; overflow-y: auto; }
+.screen.active { opacity: 1; transform: translateY(0); pointer-events: all; }
 
-  /* ─── LAYOUT ─── */
-  .app {
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
-    position: relative;
-  }
+/* TYPE */
+.eyebrow { font-size: 10px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.eyebrow::before, .eyebrow::after { content: ''; display: block; height: 1px; width: 24px; background: currentColor; opacity: .4; }
+.display-title { font-family: var(--font-display); font-size: clamp(34px, 5.5vw, 64px); font-weight: 300; line-height: 1.08; text-align: center; color: var(--text); margin-bottom: 14px; }
+.display-title em { font-style: italic; }
+.subtitle { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.72; max-width: 380px; margin-bottom: 28px; }
 
-  /* ─── AMBIENT BACKGROUND ─── */
-  .ambient {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    overflow: hidden;
-  }
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0;
-    transition: opacity 1.2s ease, background 1.2s ease;
-  }
-  .orb1 { width: 600px; height: 600px; top: -200px; left: -200px; }
-  .orb2 { width: 500px; height: 500px; bottom: -150px; right: -100px; }
-  .orb3 { width: 300px; height: 300px; top: 40%; left: 50%; transform: translate(-50%,-50%); }
+/* ── SCREEN 0 ── */
+.anger-grid { display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; justify-content: center; }
+.anger-level { display: flex; flex-direction: column; align-items: center; gap: 9px; cursor: pointer; }
+.anger-orb { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; border: 2px solid rgba(255,255,255,.12); transition: transform .2s, border-color .25s, box-shadow .25s; }
+.anger-level:hover .anger-orb { transform: scale(1.12); border-color: rgba(255,255,255,.35); }
+.anger-level.sel .anger-orb { border-color: rgba(255,255,255,.8); box-shadow: 0 0 30px rgba(255,255,255,.2); transform: scale(1.2); }
+/* BRIGHT VISIBLE LABELS */
+.anger-orb-label { font-size: 12px; font-weight: 500; color: var(--muted); transition: color .2s; letter-spacing: .01em; }
+.anger-level.sel .anger-orb-label { color: var(--text); }
+.ao1 { background: radial-gradient(circle at 40% 38%, rgba(94,207,168,.4), rgba(94,207,168,.1)); }
+.ao2 { background: radial-gradient(circle at 40% 38%, rgba(232,200,80,.4), rgba(232,200,80,.1)); }
+.ao3 { background: radial-gradient(circle at 40% 38%, rgba(240,150,70,.4), rgba(240,150,70,.1)); }
+.ao4 { background: radial-gradient(circle at 40% 38%, rgba(240,100,70,.4), rgba(240,100,70,.1)); }
+.ao5 { background: radial-gradient(circle at 40% 38%, rgba(240,70,90,.4), rgba(240,70,90,.1)); }
 
-  /* ─── SIDEBAR NAV ─── */
-  .sidebar {
-    flex: 0 0 72px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 28px 0;
-    gap: 6px;
-    border-right: 1px solid var(--border);
-    background: var(--surface);
-    z-index: 10;
-    position: relative;
-  }
-  .sidebar-logo {
-    font-family: var(--font-display);
-    font-size: 22px;
-    color: var(--purple);
-    margin-bottom: 20px;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-    letter-spacing: .12em;
-  }
-  .nav-btn {
-    width: 44px; height: 44px;
-    border-radius: 12px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .2s, transform .15s;
-    color: var(--muted);
-    font-size: 18px;
-    position: relative;
-  }
-  .nav-btn:hover { background: rgba(255,255,255,.06); color: var(--text); transform: scale(1.08); }
-  .nav-btn.active { background: rgba(155,127,232,.15); color: var(--purple); }
-  .nav-btn .pip {
-    position: absolute;
-    right: 7px; top: 7px;
-    width: 6px; height: 6px;
-    border-radius: 3px;
-    background: var(--purple);
-    opacity: 0;
-    transition: opacity .2s;
-  }
-  .nav-btn.active .pip { opacity: 1; }
-  .nav-tip {
-    position: absolute;
-    left: 100%;
-    margin-left: 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 11px;
-    color: var(--text);
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transform: translateX(-4px);
-    transition: opacity .15s, transform .15s;
-    z-index: 100;
-  }
-  .nav-btn:hover .nav-tip { opacity: 1; transform: translateX(0); }
+/* TRIGGER SECTION — fully visible heading */
+.trigger-section { margin-bottom: 28px; text-align: center; }
+.trigger-heading {
+  font-size: 13px; font-weight: 600;
+  color: var(--text);
+  letter-spacing: .12em; text-transform: uppercase;
+  margin-bottom: 16px;
+  display: inline-flex; align-items: center; gap: 12px;
+}
+.trigger-heading::before, .trigger-heading::after { content: ''; display: inline-block; width: 32px; height: 1px; background: var(--purple); opacity: .65; }
+.trigger-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 480px; }
+.chip { padding: 8px 18px; border-radius: 100px; font-size: 12px; font-weight: 400; border: 1px solid rgba(255,255,255,.2); cursor: pointer; transition: all .18s; color: var(--muted); background: rgba(255,255,255,.05); }
+.chip:hover { border-color: rgba(255,255,255,.42); color: var(--text); background: rgba(255,255,255,.1); }
+.chip.sel { border-color: var(--purple); color: var(--purple); background: rgba(184,154,245,.16); }
 
-  /* ─── MAIN CONTENT ─── */
-  .main {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
-  }
+.primary-btn { padding: 14px 44px; border-radius: 100px; font-family: var(--font-body); font-size: 13px; font-weight: 500; letter-spacing: .04em; border: none; cursor: pointer; transition: transform .15s, box-shadow .2s; }
+.primary-btn:hover { transform: translateY(-2px); }
+.primary-btn:active { transform: translateY(0) scale(.98); }
+.btn-purple { background: linear-gradient(135deg, var(--purple), var(--purple-d)); color: #fff; box-shadow: 0 8px 28px rgba(184,154,245,.32); }
+.btn-blue   { background: linear-gradient(135deg, var(--blue), var(--blue-d));     color: #fff; box-shadow: 0 8px 28px rgba(126,200,248,.32); }
+.btn-green  { background: linear-gradient(135deg, var(--green), var(--green-d));   color: #fff; box-shadow: 0 8px 28px rgba(109,221,184,.32); }
+.btn-amber  { background: linear-gradient(135deg, var(--amber), var(--amber-d));   color: #1a0e00; box-shadow: 0 8px 28px rgba(240,192,112,.32); }
 
-  .screen {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 60px;
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1);
-    pointer-events: none;
-    overflow-y: auto;
-  }
-  .screen.active {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: all;
-  }
+/* ── SCREEN 1 BREATHE ── */
+@keyframes breathePulse { 0%,100%{transform:scale(1);opacity:.55} 50%{transform:scale(1.22);opacity:1} }
+.breathe-stage { position: relative; width: 260px; height: 260px; margin: 4px auto 28px; }
+.breathe-ring  { position: absolute; border-radius: 50%; animation: breathePulse 4s ease-in-out infinite; border: 1px solid; }
+.br1 { inset:0;    border-color:rgba(126,200,248,.55); animation-delay:0s; }
+.br2 { inset:20px; border-color:rgba(126,200,248,.38); animation-delay:.18s; }
+.br3 { inset:40px; border-color:rgba(126,200,248,.22); animation-delay:.34s; }
+.br4 { inset:60px; border-color:rgba(126,200,248,.12); animation-delay:.5s; }
+.breathe-arc { position: absolute; inset: 0; }
+.arc-track { fill:none; stroke:rgba(255,255,255,.07); stroke-width:2; }
+.arc-fill  { fill:none; stroke:var(--blue); stroke-width:2; stroke-dasharray:780; stroke-dashoffset:780; stroke-linecap:round; transition:stroke .5s; }
+.breathe-center { position:absolute; inset:80px; border-radius:50%; background:radial-gradient(circle,rgba(126,200,248,.15),transparent 70%); display:flex; flex-direction:column; align-items:center; justify-content:center; animation:breathePulse 4s ease-in-out infinite; }
+.breathe-phase-name { font-family:var(--font-display); font-size:16px; font-weight:300; color:var(--blue); letter-spacing:.06em; }
+.breathe-count { font-size:32px; font-weight:300; color:var(--text); line-height:1; margin-top:2px; }
+.phase-row { display:flex; gap:6px; width:320px; max-width:90vw; margin-bottom:8px; }
+.phase-pill { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.1); }
+.phase-pill.active { background:var(--blue); }
+.phase-labels-row { display:flex; justify-content:space-between; width:320px; max-width:90vw; margin-bottom:22px; }
+.phase-lbl-item { font-size:10px; color:var(--faint); letter-spacing:.05em; }
+.phase-lbl-item.active { color:var(--blue); }
+.tip-card { background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:14px 18px; max-width:360px; width:100%; margin-bottom:26px; }
+.tip-label { font-size:9px; text-transform:uppercase; letter-spacing:.14em; color:var(--faint); margin-bottom:5px; }
+.tip-text  { font-size:13px; color:var(--muted); line-height:1.65; }
 
-  /* ─── TYPOGRAPHY ─── */
-  .eyebrow {
-    font-family: var(--font-body);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .eyebrow::before, .eyebrow::after {
-    content: '';
-    display: block;
-    height: 1px;
-    width: 28px;
-    background: currentColor;
-    opacity: .4;
-  }
-  .display-title {
-    font-family: var(--font-display);
-    font-size: clamp(42px, 6vw, 72px);
-    font-weight: 300;
-    line-height: 1.05;
-    text-align: center;
-    color: var(--text);
-    margin-bottom: 16px;
-  }
-  .display-title em { font-style: italic; }
-  .subtitle {
-    font-size: 14px;
-    color: var(--muted);
-    text-align: center;
-    line-height: 1.7;
-    max-width: 380px;
-    margin-bottom: 36px;
-  }
+/* ── SCREEN 2 RELEASE ── */
+@keyframes rise { 0%{opacity:.95;transform:translateY(0) scale(1) rotate(0deg)} 80%{opacity:.6} 100%{opacity:0;transform:translateY(-360px) scale(.15) rotate(20deg)} }
+@keyframes bobble { 0%,100%{transform:translateY(0) scale(1)} 30%{transform:translateY(-7px) scale(1.04)} 70%{transform:translateY(5px) scale(.97)} }
+@keyframes rippleOut { 0%{transform:scale(0);opacity:.75} 100%{transform:scale(4);opacity:0} }
+.release-arena { width:min(620px,92vw); height:290px; border-radius:20px; border:1px solid var(--border); background:radial-gradient(ellipse at 50% 100%,rgba(109,221,184,.09),transparent 55%); position:relative; overflow:hidden; cursor:crosshair; margin-bottom:16px; }
+.arena-hint { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; pointer-events:none; transition:opacity .5s; }
+.arena-hint-icon { font-size:36px; opacity:.3; animation:breathePulse 3s ease-in-out infinite; }
+.arena-hint-text { font-size:11px; color:var(--faint); letter-spacing:.1em; text-transform:uppercase; }
+.bubble-idle  { position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:500; line-height:1.25; padding:8px; border:1px solid rgba(255,255,255,.2); cursor:pointer; user-select:none; animation:bobble ease-in-out infinite; color:rgba(255,255,255,.95); transition:transform .12s, filter .12s; backdrop-filter:blur(2px); }
+.bubble-idle:hover { transform:scale(1.14) !important; filter:brightness(1.3); }
+.bubble-rising { position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:500; line-height:1.25; padding:8px; border:1px solid rgba(255,255,255,.18); pointer-events:none; color:rgba(255,255,255,.9); animation:rise linear forwards; }
+.ripple-ring { position:absolute; border-radius:50%; pointer-events:none; animation:rippleOut .75s ease forwards; border:2px solid rgba(109,221,184,.65); }
+.release-stats { display:flex; gap:40px; margin-bottom:20px; }
+.rel-stat { text-align:center; }
+.rel-stat-num { font-family:var(--font-display); font-size:36px; font-weight:300; line-height:1; }
+.rel-stat-lbl { font-size:10px; color:var(--faint); letter-spacing:.08em; text-transform:uppercase; margin-top:4px; }
 
-  /* ─── ENTRY SCREEN ─── */
-  .anger-grid {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 32px;
-  }
-  .anger-level {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-  }
-  .anger-orb {
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    border: 1.5px solid transparent;
-    transition: transform .2s, border-color .2s, box-shadow .2s;
-    position: relative;
-  }
-  .anger-level:hover .anger-orb { transform: scale(1.12); }
-  .anger-level.sel .anger-orb {
-    border-color: rgba(255,255,255,.5);
-    box-shadow: 0 0 24px rgba(255,255,255,.12);
-    transform: scale(1.15);
-  }
-  .anger-orb-label { font-size: 10px; color: var(--faint); transition: color .2s; }
-  .anger-level.sel .anger-orb-label { color: var(--muted); }
+/* ── SCREEN 3 WISDOM ── */
+.wisdom-stage { max-width:580px; width:100%; margin-bottom:24px; }
+.wisdom-card { background:var(--surface2); border:1px solid rgba(255,255,255,.11); border-radius:22px; padding:32px 36px; position:relative; margin-bottom:14px; transition:opacity .35s, transform .35s; }
+.wisdom-quote-mark { font-family:var(--font-display); font-size:72px; color:var(--amber); opacity:.22; line-height:.55; margin-bottom:14px; display:block; }
+.wisdom-text { font-family:var(--font-display); font-size:clamp(17px,2.4vw,25px); font-weight:300; font-style:italic; line-height:1.52; color:var(--text); margin-bottom:18px; }
+.wisdom-divider { width:36px; height:1px; background:var(--amber); opacity:.45; margin-bottom:12px; }
+.wisdom-author { font-size:12px; color:var(--amber); font-weight:500; letter-spacing:.1em; text-transform:uppercase; }
+.wisdom-source { font-size:11px; color:var(--faint); margin-top:4px; font-style:italic; }
+.wisdom-mood-tag { position:absolute; top:14px; right:14px; padding:4px 10px; border-radius:100px; font-size:9px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; background:rgba(240,192,112,.14); color:var(--amber); border:1px solid rgba(240,192,112,.22); }
+.wisdom-nav { display:flex; gap:8px; justify-content:center; margin-bottom:22px; }
+.wisdom-pip { width:7px; height:7px; border-radius:4px; background:var(--faint); cursor:pointer; transition:background .2s, width .2s; border:none; }
+.wisdom-pip.active { background:var(--amber); width:22px; }
 
-  .ao1 { background: radial-gradient(circle at 40% 40%, #5ecfa820, #3aaa8210); }
-  .ao2 { background: radial-gradient(circle at 40% 40%, #e8b45e20, #c48e3510); }
-  .ao3 { background: radial-gradient(circle at 40% 40%, #e89b5e20, #c4703510); }
-  .ao4 { background: radial-gradient(circle at 40% 40%, #e87e5e20, #c4503510); }
-  .ao5 { background: radial-gradient(circle at 40% 40%, #e85e6820, #c4353510); }
+/* ── SCREEN 4 PROGRESS ── */
+@keyframes orbitSpin { to { transform:rotate(360deg); } }
+@keyframes popIn     { 0%{transform:scale(0) rotate(-8deg);opacity:0} 70%{transform:scale(1.08) rotate(2deg)} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+@keyframes countUp   { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.streak-hero { display:flex; flex-direction:column; align-items:center; margin-bottom:24px; }
+.streak-ring-wrap { position:relative; width:148px; height:148px; margin-bottom:16px; animation:popIn .65s cubic-bezier(.3,.8,.3,1.2) both; }
+.streak-orbit { position:absolute; inset:-14px; border-radius:50%; border:1px dashed rgba(240,192,112,.28); animation:orbitSpin 16s linear infinite; }
+.streak-orbit::after { content:''; position:absolute; width:7px; height:7px; border-radius:50%; background:var(--amber); top:50%; right:-3.5px; transform:translateY(-50%); box-shadow:0 0 10px var(--amber); }
+.streak-inner { position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 40% 35%,rgba(240,192,112,.2),rgba(240,192,112,.05) 65%); border:1.5px solid rgba(240,192,112,.3); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.streak-number { font-family:var(--font-display); font-size:52px; font-weight:300; line-height:1; color:var(--amber); animation:countUp .5s .3s both; }
+.streak-unit { font-size:10px; text-transform:uppercase; letter-spacing:.14em; color:rgba(240,192,112,.75); margin-top:2px; }
+.streak-caption { font-size:13px; color:var(--muted); text-align:center; max-width:280px; line-height:1.6; }
 
-  .trigger-chips {
-    display: flex; flex-wrap: wrap; gap: 8px;
-    justify-content: center;
-    max-width: 440px;
-    margin-bottom: 36px;
-  }
-  .chip {
-    padding: 7px 16px;
-    border-radius: 100px;
-    font-size: 12px;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: all .18s;
-    color: var(--muted);
-    background: transparent;
-  }
-  .chip:hover { border-color: rgba(255,255,255,.2); color: var(--text); background: rgba(255,255,255,.04); }
-  .chip.sel { border-color: var(--purple); color: var(--purple); background: rgba(155,127,232,.1); }
+/* STATS GRID — bright, visible */
+.stats-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; width:min(580px,92vw); margin-bottom:22px; }
+.stat-card { background:var(--surface2); border:1px solid rgba(255,255,255,.13); border-radius:14px; padding:16px 10px; text-align:center; transition:border-color .2s; }
+.stat-card:hover { border-color:rgba(255,255,255,.26); }
+.stat-num { font-family:var(--font-display); font-size:30px; font-weight:300; line-height:1; animation:countUp .5s both; }
+/* FIXED: stat labels fully visible */
+.stat-lbl { font-size:11px; font-weight:600; color:rgba(240,237,230,.82); text-transform:uppercase; letter-spacing:.07em; margin-top:7px; }
 
-  .primary-btn {
-    padding: 15px 42px;
-    border-radius: 100px;
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: .04em;
-    border: none;
-    cursor: pointer;
-    transition: transform .15s, box-shadow .2s, opacity .2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .primary-btn::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0);
-    transition: background .15s;
-  }
-  .primary-btn:hover { transform: translateY(-2px); }
-  .primary-btn:hover::after { background: rgba(255,255,255,.06); }
-  .primary-btn:active { transform: translateY(0); }
-  .btn-purple-grad { background: linear-gradient(135deg, var(--purple) 0%, var(--purple-d) 100%); color: #fff; box-shadow: 0 8px 32px rgba(155,127,232,.3); }
-  .btn-blue-grad   { background: linear-gradient(135deg, var(--blue)   0%, var(--blue-d)   100%); color: #fff; box-shadow: 0 8px 32px rgba(94,168,240,.3); }
-  .btn-green-grad  { background: linear-gradient(135deg, var(--green)  0%, var(--green-d)  100%); color: #fff; box-shadow: 0 8px 32px rgba(94,207,168,.3); }
-  .btn-amber-grad  { background: linear-gradient(135deg, var(--amber)  0%, var(--amber-d)  100%); color: #fff; box-shadow: 0 8px 32px rgba(232,180,94,.3); }
+/* BADGES — fixed visibility */
+.badges-row { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-bottom:24px; }
+.badge { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; }
+.badge-icon { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; transition:transform .2s; border:1px solid rgba(255,255,255,.16); }
+.badge:hover .badge-icon { transform:scale(1.12); }
+/* FIXED: badge names visible */
+.badge-name { font-size:11px; font-weight:600; color:rgba(240,237,230,.80); text-align:center; }
+.badge-locked .badge-name { color:rgba(240,237,230,.28); }
+.badge-locked .badge-icon { opacity:.3; }
 
-  /* ─── BREATHE SCREEN ─── */
-  @keyframes breathePulse {
-    0%, 100% { transform: scale(1);   opacity: .6; }
-    50%       { transform: scale(1.2); opacity: 1;  }
-  }
-  @keyframes breatheCore {
-    0%, 100% { transform: scale(1);   }
-    50%       { transform: scale(1.15); }
-  }
-  @keyframes countdown {
-    from { stroke-dashoffset: 0; }
-    to   { stroke-dashoffset: 283; }
-  }
+/* FOOTER QUOTE */
+.micro-quote { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); font-family:var(--font-display); font-size:12px; font-style:italic; color:var(--faint); pointer-events:none; z-index:5; white-space:nowrap; transition:opacity .5s; }
 
-  .breathe-stage {
-    position: relative;
-    width: 280px; height: 280px;
-    margin: 0 auto 36px;
-  }
-  .breathe-ring {
-    position: absolute;
-    border-radius: 50%;
-    animation: breathePulse 4s ease-in-out infinite;
-    border: 1px solid;
-  }
-  .br1 { inset: 0;    border-color: rgba(94,168,240,.5);  animation-delay: 0s; }
-  .br2 { inset: 22px; border-color: rgba(94,168,240,.35); animation-delay: .15s; }
-  .br3 { inset: 44px; border-color: rgba(94,168,240,.2);  animation-delay: .3s; }
-  .br4 { inset: 66px; border-color: rgba(94,168,240,.12); animation-delay: .45s; }
-  .breathe-center {
-    position: absolute;
-    inset: 88px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(94,168,240,.12), transparent 70%);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    animation: breatheCore 4s ease-in-out infinite;
-  }
-  .breathe-phase-name {
-    font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 300;
-    color: var(--blue);
-    letter-spacing: .04em;
-  }
-  .breathe-count {
-    font-size: 28px;
-    font-weight: 300;
-    color: var(--text);
-    line-height: 1;
-    margin-top: 2px;
-  }
-  .breathe-arc {
-    position: absolute;
-    inset: 0;
-  }
-  .arc-track { fill: none; stroke: rgba(255,255,255,.06); stroke-width: 2; }
-  .arc-fill {
-    fill: none;
-    stroke: var(--blue);
-    stroke-width: 2;
-    stroke-dasharray: 800;
-    stroke-dashoffset: 800;
-    stroke-linecap: round;
-    transition: stroke-dashoffset .1s linear, stroke .5s;
-  }
+/* TOAST */
+@keyframes toastIn  { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+@keyframes toastOut { from{opacity:1} to{opacity:0} }
+.toast { position:fixed; bottom:44px; left:50%; transform:translateX(-50%); background:var(--surface2); border:1px solid var(--border); border-radius:100px; padding:9px 20px; font-size:12px; color:var(--text); z-index:200; pointer-events:none; animation:toastIn .3s ease both, toastOut .3s ease 2.4s forwards; }
 
-  .phase-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-  .phase-pill {
-    flex: 1;
-    height: 3px;
-    border-radius: 2px;
-    background: rgba(255,255,255,.1);
-    overflow: hidden;
-  }
-  .phase-pill.active { background: var(--blue); }
-  .phase-labels-row {
-    display: flex;
-    justify-content: space-between;
-    width: 340px;
-    max-width: 100%;
-    margin-bottom: 28px;
-  }
-  .phase-lbl-item { font-size: 10px; color: var(--faint); letter-spacing: .06em; }
-  .phase-lbl-item.active { color: var(--blue); }
+/* SCROLLBAR */
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
 
-  .tip-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px 20px;
-    max-width: 380px;
-    margin-bottom: 32px;
-  }
-  .tip-label { font-size: 9px; text-transform: uppercase; letter-spacing: .14em; color: var(--faint); margin-bottom: 6px; }
-  .tip-text  { font-size: 13px; color: var(--muted); line-height: 1.6; }
-
-  /* ─── RELEASE SCREEN ─── */
-  @keyframes rise {
-    0%   { transform: translateY(0)   scale(1);    opacity: .95; }
-    85%  { opacity: .6; }
-    100% { transform: translateY(-400px) scale(.25); opacity: 0; }
-  }
-  @keyframes popBurst {
-    0%   { transform: scale(1);    opacity: 1; }
-    40%  { transform: scale(1.4);  opacity: .6; }
-    100% { transform: scale(0);    opacity: 0; }
-  }
-
-  .release-arena {
-    width: min(560px, 90vw);
-    height: 320px;
-    border-radius: 24px;
-    border: 1px solid var(--border);
-    background: radial-gradient(ellipse at 50% 100%, rgba(94,207,168,.06), transparent 60%);
-    position: relative;
-    overflow: hidden;
-    cursor: crosshair;
-    margin-bottom: 16px;
-  }
-  .arena-hint {
-    position: absolute;
-    inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 10px;
-    pointer-events: none;
-    transition: opacity .4s;
-  }
-  .arena-hint-icon {
-    font-size: 40px;
-    opacity: .25;
-    animation: breathePulse 3s ease-in-out infinite;
-  }
-  .arena-hint-text { font-size: 12px; color: var(--faint); letter-spacing: .06em; }
-  .bubble {
-    position: absolute;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    text-align: center;
-    font-size: 10px;
-    line-height: 1.2;
-    padding: 8px;
-    cursor: pointer;
-    animation: rise linear forwards;
-    border: 1px solid rgba(255,255,255,.12);
-    transition: transform .1s;
-    user-select: none;
-  }
-  .bubble:hover { filter: brightness(1.15); }
-
-  .release-stats {
-    display: flex; gap: 32px;
-    margin-bottom: 28px;
-  }
-  .rel-stat { text-align: center; }
-  .rel-stat-num { font-family: var(--font-display); font-size: 32px; font-weight: 300; line-height: 1; }
-  .rel-stat-lbl { font-size: 10px; color: var(--faint); letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
-
-  /* ─── WISDOM SCREEN ─── */
-  .wisdom-stage {
-    max-width: 600px;
-    width: 100%;
-    margin-bottom: 32px;
-  }
-  .wisdom-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 36px 40px;
-    position: relative;
-    margin-bottom: 16px;
-    overflow: hidden;
-    transition: opacity .4s, transform .4s;
-  }
-  .wisdom-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 24px;
-    pointer-events: none;
-  }
-  .wisdom-quote-mark {
-    font-family: var(--font-display);
-    font-size: 80px;
-    color: var(--amber);
-    opacity: .18;
-    line-height: .6;
-    margin-bottom: 16px;
-    display: block;
-  }
-  .wisdom-text {
-    font-family: var(--font-display);
-    font-size: clamp(20px, 2.5vw, 28px);
-    font-weight: 300;
-    font-style: italic;
-    line-height: 1.45;
-    color: var(--text);
-    margin-bottom: 20px;
-  }
-  .wisdom-divider {
-    width: 40px; height: 1px;
-    background: var(--amber);
-    opacity: .4;
-    margin-bottom: 14px;
-  }
-  .wisdom-author { font-size: 12px; color: var(--amber); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; }
-  .wisdom-source { font-size: 11px; color: var(--faint); margin-top: 4px; font-style: italic; }
-
-  .wisdom-nav {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-bottom: 28px;
-  }
-  .wisdom-pip {
-    width: 8px; height: 8px;
-    border-radius: 4px;
-    background: var(--faint);
-    cursor: pointer;
-    transition: background .2s, width .2s;
-    border: none;
-  }
-  .wisdom-pip.active { background: var(--amber); width: 24px; }
-
-  /* ─── STREAK SCREEN ─── */
-  @keyframes orbitSpin { to { transform: rotate(360deg); } }
-  @keyframes popIn     { 0% { transform: scale(0) rotate(-8deg); opacity: 0; } 70% { transform: scale(1.08) rotate(2deg); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
-  @keyframes countUp   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-  .streak-hero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 36px;
-  }
-  .streak-ring-wrap {
-    position: relative;
-    width: 160px; height: 160px;
-    margin-bottom: 20px;
-    animation: popIn .6s cubic-bezier(.3,.8,.3,1.2) both;
-  }
-  .streak-orbit {
-    position: absolute;
-    inset: -16px;
-    border-radius: 50%;
-    border: 1px dashed rgba(232,180,94,.2);
-    animation: orbitSpin 18s linear infinite;
-  }
-  .streak-orbit::after {
-    content: '';
-    position: absolute;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--amber);
-    top: 50%;
-    right: -4px;
-    transform: translateY(-50%);
-    box-shadow: 0 0 12px var(--amber);
-  }
-  .streak-inner {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: radial-gradient(circle at 40% 35%, rgba(232,180,94,.18), rgba(232,180,94,.05) 60%);
-    border: 1px solid rgba(232,180,94,.25);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-  }
-  .streak-number {
-    font-family: var(--font-display);
-    font-size: 56px;
-    font-weight: 300;
-    line-height: 1;
-    color: var(--amber);
-    animation: countUp .5s .3s both;
-  }
-  .streak-unit {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: rgba(232,180,94,.7);
-    margin-top: 2px;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    width: min(600px, 90vw);
-    margin-bottom: 28px;
-  }
-  .stat-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px 12px;
-    text-align: center;
-    transition: border-color .2s, background .2s;
-  }
-  .stat-card:hover { border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.03); }
-  .stat-num {
-    font-family: var(--font-display);
-    font-size: 32px;
-    font-weight: 300;
-    line-height: 1;
-    animation: countUp .5s both;
-  }
-  .stat-lbl { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; margin-top: 6px; }
-
-  .badges-row {
-    display: flex; gap: 14px;
-    margin-bottom: 28px;
-  }
-  .badge {
-    display: flex; flex-direction: column;
-    align-items: center; gap: 6px;
-    cursor: pointer;
-  }
-  .badge-icon {
-    width: 52px; height: 52px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    border: 1px solid rgba(255,255,255,.1);
-    transition: transform .2s, box-shadow .2s;
-  }
-  .badge:hover .badge-icon { transform: scale(1.1); }
-  .badge-name { font-size: 10px; color: var(--faint); text-align: center; }
-
-  /* ─── MICRO QUOTE FOOTER ─── */
-  .micro-quote {
-    position: fixed;
-    bottom: 20px;
-    left: 50%; transform: translateX(-50%);
-    font-family: var(--font-display);
-    font-size: 12px;
-    font-style: italic;
-    color: var(--faint);
-    text-align: center;
-    pointer-events: none;
-    z-index: 5;
-    transition: opacity .5s;
-    white-space: nowrap;
-  }
-
-  /* ─── SCROLLBAR ─── */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  /* ─── TOAST ─── */
-  @keyframes toastIn  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
-  .toast {
-    position: fixed;
-    bottom: 52px;
-    left: 50%; transform: translateX(-50%);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    padding: 10px 20px;
-    font-size: 12px;
-    color: var(--text);
-    z-index: 100;
-    animation: toastIn .3s ease, toastOut .3s ease 2.5s forwards;
-    pointer-events: none;
-  }
-
-  /* ─── PARTICLE CANVAS ─── */
-  #particles {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: .4;
-  }
-
-  /* ─── RIPPLE ─── */
-  @keyframes rippleOut {
-    0%   { transform: scale(0);   opacity: .6; }
-    100% { transform: scale(3.5); opacity: 0; }
-  }
-  .ripple {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    animation: rippleOut .8s ease forwards;
-  }
+/* MOBILE */
+@media (max-width:600px) {
+  .sidebar { flex:0 0 50px; }
+  .sidebar-logo { font-size:16px; }
+  .nav-btn { width:34px; height:34px; font-size:14px; }
+  .screen { padding:20px 14px 60px; justify-content:flex-start; padding-top:22px; }
+  .display-title { font-size:clamp(26px,8vw,40px); }
+  .breathe-stage { width:210px; height:210px; }
+  .breathe-center { inset:66px; }
+  .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .anger-grid { gap:8px; }
+  .anger-orb { width:54px; height:54px; font-size:24px; }
+  .release-arena { height:230px; width:96vw; }
+  .wisdom-card { padding:20px 18px; }
+  .micro-quote { display:none; }
+  .badges-row { gap:10px; }
+}
 </style>
 </head>
 <body>
@@ -689,185 +236,118 @@
 </div>
 
 <div class="app">
-
-  <!-- ─── SIDEBAR ─── -->
+  <!-- SIDEBAR -->
   <nav class="sidebar">
-    <div class="sidebar-logo">Serene</div>
-
-    <button class="nav-btn active" id="nb0" onclick="goScreen(0)" title="">
-      ☁
-      <div class="pip"></div>
-      <span class="nav-tip">Check-in</span>
-    </button>
-    <button class="nav-btn" id="nb1" onclick="goScreen(1)" title="">
-      ◎
-      <div class="pip"></div>
-      <span class="nav-tip">Breathe</span>
-    </button>
-    <button class="nav-btn" id="nb2" onclick="goScreen(2)" title="">
-      ◉
-      <div class="pip"></div>
-      <span class="nav-tip">Release</span>
-    </button>
-    <button class="nav-btn" id="nb3" onclick="goScreen(3)" title="">
-      ✦
-      <div class="pip"></div>
-      <span class="nav-tip">Wisdom</span>
-    </button>
-    <button class="nav-btn" id="nb4" onclick="goScreen(4)" title="">
-      ◈
-      <div class="pip"></div>
-      <span class="nav-tip">Progress</span>
-    </button>
+    <div class="sidebar-logo">S</div>
+    <button class="nav-btn active" id="nb0" onclick="goScreen(0)">☁<div class="pip"></div><span class="nav-tip">Check-in</span></button>
+    <button class="nav-btn" id="nb1" onclick="goScreen(1)">◎<div class="pip"></div><span class="nav-tip">Breathe</span></button>
+    <button class="nav-btn" id="nb2" onclick="goScreen(2)">◉<div class="pip"></div><span class="nav-tip">Release</span></button>
+    <button class="nav-btn" id="nb3" onclick="goScreen(3)">✦<div class="pip"></div><span class="nav-tip">Wisdom</span></button>
+    <button class="nav-btn" id="nb4" onclick="goScreen(4)">◈<div class="pip"></div><span class="nav-tip">Progress</span></button>
   </nav>
 
-  <!-- ─── MAIN ─── -->
   <main class="main">
 
-    <!-- ══ SCREEN 0: CHECK-IN ══ -->
+    <!-- SCREEN 0: CHECK-IN -->
     <section class="screen active" id="s0">
       <div class="eyebrow" style="color:var(--purple)">Welcome back</div>
       <h1 class="display-title">How are you <em>feeling</em><br>right now?</h1>
-      <p class="subtitle">There's no judgment here. Let's understand what you're experiencing so we can help.</p>
-
+      <p class="subtitle">No judgment here. Let's understand what's happening inside.</p>
       <div class="anger-grid">
-        <div class="anger-level" onclick="selectAnger(this,0)">
-          <div class="anger-orb ao1">😤</div>
-          <span class="anger-orb-label">Annoyed</span>
-        </div>
-        <div class="anger-level" onclick="selectAnger(this,1)">
-          <div class="anger-orb ao2">😠</div>
-          <span class="anger-orb-label">Irritated</span>
-        </div>
-        <div class="anger-level sel" onclick="selectAnger(this,2)">
-          <div class="anger-orb ao3">😡</div>
-          <span class="anger-orb-label">Angry</span>
-        </div>
-        <div class="anger-level" onclick="selectAnger(this,3)">
-          <div class="anger-orb ao4">🤬</div>
-          <span class="anger-orb-label">Furious</span>
-        </div>
-        <div class="anger-level" onclick="selectAnger(this,4)">
-          <div class="anger-orb ao5">💢</div>
-          <span class="anger-orb-label">Explosive</span>
+        <div class="anger-level" onclick="selectAnger(this)"><div class="anger-orb ao1">😤</div><span class="anger-orb-label">Annoyed</span></div>
+        <div class="anger-level" onclick="selectAnger(this)"><div class="anger-orb ao2">😠</div><span class="anger-orb-label">Irritated</span></div>
+        <div class="anger-level sel" onclick="selectAnger(this)"><div class="anger-orb ao3">😡</div><span class="anger-orb-label">Angry</span></div>
+        <div class="anger-level" onclick="selectAnger(this)"><div class="anger-orb ao4">🤬</div><span class="anger-orb-label">Furious</span></div>
+        <div class="anger-level" onclick="selectAnger(this)"><div class="anger-orb ao5">💢</div><span class="anger-orb-label">Explosive</span></div>
+      </div>
+      <div class="trigger-section">
+        <div class="trigger-heading">What Triggered You?</div>
+        <div class="trigger-chips">
+          <div class="chip" onclick="toggleChip(this)">Someone's behaviour</div>
+          <div class="chip sel" onclick="toggleChip(this)">Work / deadlines</div>
+          <div class="chip" onclick="toggleChip(this)">Traffic or waiting</div>
+          <div class="chip" onclick="toggleChip(this)">Injustice</div>
+          <div class="chip" onclick="toggleChip(this)">Family conflict</div>
+          <div class="chip" onclick="toggleChip(this)">Financial stress</div>
+          <div class="chip" onclick="toggleChip(this)">Feeling unheard</div>
+          <div class="chip" onclick="toggleChip(this)">Something else</div>
         </div>
       </div>
-
-      <p style="font-size:11px;color:var(--faint);margin-bottom:12px;letter-spacing:.06em;text-transform:uppercase">What triggered you?</p>
-      <div class="trigger-chips" id="trigger-chips">
-        <div class="chip" onclick="toggleChip(this)">Someone's behaviour</div>
-        <div class="chip sel" onclick="toggleChip(this)">Work / deadlines</div>
-        <div class="chip" onclick="toggleChip(this)">Traffic or waiting</div>
-        <div class="chip" onclick="toggleChip(this)">Injustice</div>
-        <div class="chip" onclick="toggleChip(this)">Family conflict</div>
-        <div class="chip" onclick="toggleChip(this)">Financial stress</div>
-        <div class="chip" onclick="toggleChip(this)">Something else</div>
-      </div>
-
-      <button class="primary-btn btn-purple-grad" onclick="goScreen(1)">
-        Begin calming journey &rarr;
-      </button>
+      <button class="primary-btn btn-purple" onclick="goScreen(1)">Begin calming journey &rarr;</button>
     </section>
 
-    <!-- ══ SCREEN 1: BREATHE ══ -->
+    <!-- SCREEN 1: BREATHE -->
     <section class="screen" id="s1">
       <div class="eyebrow" style="color:var(--blue)">Step 1 of 3</div>
       <h1 class="display-title">Let your breath<br><em>lead the way.</em></h1>
-
       <div class="breathe-stage">
         <div class="breathe-ring br1"></div>
         <div class="breathe-ring br2"></div>
         <div class="breathe-ring br3"></div>
         <div class="breathe-ring br4"></div>
-        <svg class="breathe-arc" viewBox="0 0 280 280">
-          <circle class="arc-track" cx="140" cy="140" r="125"/>
-          <circle class="arc-fill" id="arc-fill" cx="140" cy="140" r="125" transform="rotate(-90 140 140)"/>
+        <svg class="breathe-arc" viewBox="0 0 260 260">
+          <circle class="arc-track" cx="130" cy="130" r="124"/>
+          <circle class="arc-fill" id="arc-fill" cx="130" cy="130" r="124" transform="rotate(-90 130 130)"/>
         </svg>
         <div class="breathe-center">
           <div class="breathe-phase-name" id="phase-name">Inhale</div>
           <div class="breathe-count" id="phase-count">4</div>
         </div>
       </div>
-
-      <div class="phase-row" style="width:340px;max-width:90vw">
-        <div class="phase-pill active" id="pp0"></div>
-        <div class="phase-pill" id="pp1"></div>
-        <div class="phase-pill" id="pp2"></div>
-        <div class="phase-pill" id="pp3"></div>
-      </div>
+      <div class="phase-row"><div class="phase-pill active" id="pp0"></div><div class="phase-pill" id="pp1"></div><div class="phase-pill" id="pp2"></div><div class="phase-pill" id="pp3"></div></div>
       <div class="phase-labels-row">
         <span class="phase-lbl-item active" id="pl0">Inhale · 4s</span>
         <span class="phase-lbl-item" id="pl1">Hold · 7s</span>
         <span class="phase-lbl-item" id="pl2">Exhale · 8s</span>
         <span class="phase-lbl-item" id="pl3">Rest · 1s</span>
       </div>
-
       <div class="tip-card">
         <div class="tip-label">Why 4-7-8?</div>
-        <div class="tip-text">The extended exhale activates your parasympathetic nervous system — the body's natural brake for stress. Within 90 seconds, cortisol drops and your heart rate slows.</div>
+        <div class="tip-text">The extended exhale activates your parasympathetic nervous system — your body's natural brake for stress. Cortisol drops and heart rate slows within 90 seconds.</div>
       </div>
-
-      <button class="primary-btn btn-blue-grad" onclick="goScreen(2)">
-        I feel calmer &rarr; release anger
-      </button>
+      <button class="primary-btn btn-blue" onclick="goScreen(2)">I feel calmer &rarr; release anger</button>
     </section>
 
-    <!-- ══ SCREEN 2: RELEASE ══ -->
+    <!-- SCREEN 2: RELEASE -->
     <section class="screen" id="s2">
       <div class="eyebrow" style="color:var(--green)">Step 2 of 3</div>
-      <h1 class="display-title">Tap to set<br><em>it free.</em></h1>
-      <p class="subtitle">Each bubble holds one angry thought. Tap it — watch it float away and disappear.</p>
-
-      <div class="release-arena" id="arena" onclick="onArenaTap(event)">
+      <h1 class="display-title">Click a bubble to<br><em>set it free.</em></h1>
+      <p class="subtitle">Each bubble holds an angry thought. Click it — watch it float away forever.</p>
+      <div class="release-arena" id="arena">
         <div class="arena-hint" id="arena-hint">
           <div class="arena-hint-icon">💭</div>
-          <div class="arena-hint-text">CLICK ANYWHERE TO RELEASE</div>
+          <div class="arena-hint-text">Bubbles are loading...</div>
         </div>
       </div>
-
       <div class="release-stats">
-        <div class="rel-stat">
-          <div class="rel-stat-num" id="pop-count" style="color:var(--green)">0</div>
-          <div class="rel-stat-lbl">thoughts released</div>
-        </div>
-        <div class="rel-stat">
-          <div class="rel-stat-num" id="calm-pct" style="color:var(--blue)">0%</div>
-          <div class="rel-stat-lbl">calmer than before</div>
-        </div>
+        <div class="rel-stat"><div class="rel-stat-num" id="pop-count" style="color:var(--green)">0</div><div class="rel-stat-lbl">thoughts released</div></div>
+        <div class="rel-stat"><div class="rel-stat-num" id="calm-pct" style="color:var(--blue)">0%</div><div class="rel-stat-lbl">calmer than before</div></div>
       </div>
-
-      <button class="primary-btn btn-green-grad" onclick="goScreen(3)">
-        I feel lighter &rarr; receive wisdom
-      </button>
+      <button class="primary-btn btn-green" onclick="goScreen(3)">I feel lighter &rarr; receive wisdom</button>
     </section>
 
-    <!-- ══ SCREEN 3: WISDOM ══ -->
+    <!-- SCREEN 3: WISDOM -->
     <section class="screen" id="s3">
       <div class="eyebrow" style="color:var(--amber)">Step 3 of 3</div>
       <h1 class="display-title">Timeless words<br><em>for this moment.</em></h1>
-
       <div class="wisdom-stage">
         <div class="wisdom-card" id="wcard">
+          <div class="wisdom-mood-tag" id="wisdom-tag">On peace</div>
           <span class="wisdom-quote-mark">"</span>
           <p class="wisdom-text" id="wisdom-body">Do not let the behavior of others destroy your inner peace.</p>
           <div class="wisdom-divider"></div>
           <div class="wisdom-author" id="wisdom-author">Dalai Lama</div>
           <div class="wisdom-source" id="wisdom-source">Buddhist spiritual leader &amp; Nobel Peace laureate</div>
         </div>
-
         <div class="wisdom-nav" id="wisdom-nav"></div>
       </div>
-
-      <button class="primary-btn btn-amber-grad" onclick="goScreen(4)">
-        I am at peace &rarr; see my growth
-      </button>
+      <button class="primary-btn btn-amber" onclick="goScreen(4)">I am at peace &rarr; see my growth</button>
     </section>
 
-    <!-- ══ SCREEN 4: PROGRESS ══ -->
+    <!-- SCREEN 4: PROGRESS -->
     <section class="screen" id="s4">
       <div class="eyebrow" style="color:var(--amber)">Your journey</div>
       <h1 class="display-title">Another storm<br><em>navigated.</em></h1>
-
       <div class="streak-hero">
         <div class="streak-ring-wrap">
           <div class="streak-orbit"></div>
@@ -876,251 +356,248 @@
             <div class="streak-unit">day streak</div>
           </div>
         </div>
-        <p style="font-size:13px;color:var(--muted);text-align:center;max-width:300px;line-height:1.6">Seven consecutive days of choosing calm over reaction. That is wisdom in practice.</p>
+        <p class="streak-caption">Seven consecutive days of choosing calm over reaction. That is wisdom in practice.</p>
       </div>
-
       <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-num" style="color:var(--purple);animation-delay:.1s">23</div>
-          <div class="stat-lbl">sessions</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" style="color:var(--green);animation-delay:.2s">84%</div>
-          <div class="stat-lbl">de-escalated</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" style="color:var(--blue);animation-delay:.3s" id="total-pops">142</div>
-          <div class="stat-lbl">thoughts released</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" style="color:var(--amber);animation-delay:.4s">3</div>
-          <div class="stat-lbl">badges earned</div>
-        </div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--purple);animation-delay:.1s">23</div><div class="stat-lbl">Sessions</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--green);animation-delay:.2s">84%</div><div class="stat-lbl">De-escalated</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--blue);animation-delay:.3s" id="total-pops">142</div><div class="stat-lbl">Thoughts freed</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--amber);animation-delay:.4s">3</div><div class="stat-lbl">Badges earned</div></div>
       </div>
-
       <div class="badges-row">
-        <div class="badge">
-          <div class="badge-icon" style="background:radial-gradient(circle,rgba(232,180,94,.18),rgba(232,180,94,.05));border-color:rgba(232,180,94,.25)">🌊</div>
-          <div class="badge-name">First calm</div>
-        </div>
-        <div class="badge">
-          <div class="badge-icon" style="background:radial-gradient(circle,rgba(155,127,232,.18),rgba(155,127,232,.05));border-color:rgba(155,127,232,.25)">🔥</div>
-          <div class="badge-name">7-day fire</div>
-        </div>
-        <div class="badge">
-          <div class="badge-icon" style="background:radial-gradient(circle,rgba(94,207,168,.18),rgba(94,207,168,.05));border-color:rgba(94,207,168,.25)">🌿</div>
-          <div class="badge-name">Inner peace</div>
-        </div>
-        <div class="badge">
-          <div class="badge-icon" style="background:rgba(255,255,255,.04);opacity:.4">🔒</div>
-          <div class="badge-name">30-day sage</div>
-        </div>
-        <div class="badge">
-          <div class="badge-icon" style="background:rgba(255,255,255,.04);opacity:.4">🔒</div>
-          <div class="badge-name">Zen master</div>
-        </div>
+        <div class="badge"><div class="badge-icon" style="background:radial-gradient(circle,rgba(240,192,112,.22),rgba(240,192,112,.06));border-color:rgba(240,192,112,.35)">🌊</div><div class="badge-name">First Calm</div></div>
+        <div class="badge"><div class="badge-icon" style="background:radial-gradient(circle,rgba(184,154,245,.22),rgba(184,154,245,.06));border-color:rgba(184,154,245,.35)">🔥</div><div class="badge-name">7-Day Fire</div></div>
+        <div class="badge"><div class="badge-icon" style="background:radial-gradient(circle,rgba(109,221,184,.22),rgba(109,221,184,.06));border-color:rgba(109,221,184,.35)">🌿</div><div class="badge-name">Inner Peace</div></div>
+        <div class="badge badge-locked"><div class="badge-icon">🔒</div><div class="badge-name">30-Day Sage</div></div>
+        <div class="badge badge-locked"><div class="badge-icon">🔒</div><div class="badge-name">Zen Master</div></div>
       </div>
-
-      <button class="primary-btn btn-purple-grad" onclick="goScreen(0)">
-        Begin a new session
-      </button>
+      <button class="primary-btn btn-purple" onclick="goScreen(0)">Begin a new session</button>
     </section>
 
   </main>
 </div>
-
 <div class="micro-quote" id="mq"></div>
 
 <script>
-/* ─── DATA ─── */
+/* DATA */
 const WISDOMS = [
-  { text: "Do not let the behavior of others destroy your inner peace.", author: "Dalai Lama", source: "Buddhist spiritual leader & Nobel Peace laureate" },
-  { text: "Calmness of mind is one of the beautiful jewels of wisdom.", author: "Swami Vivekananda", source: "Hindu monk & philosopher, 19th century" },
-  { text: "Smile, breathe, and go slowly.", author: "Thich Nhat Hanh", source: "Vietnamese Zen Buddhist master" },
-  { text: "You have power over your mind — not outside events. Realize this, and you will find strength.", author: "Marcus Aurelius", source: "Roman Emperor & Stoic philosopher, 2nd century AD" },
-  { text: "Peace is not the absence of conflict; it is the ability to handle conflict by staying balanced.", author: "Sadhguru", source: "Indian yogi and mystic" },
-  { text: "When another person makes you suffer, it is because he suffers deeply himself.", author: "Thich Nhat Hanh", source: "Vietnamese Zen Buddhist master" },
+  { text:"Do not let the behavior of others destroy your inner peace.", author:"Dalai Lama", source:"Buddhist spiritual leader & Nobel Peace laureate", tag:"On peace" },
+  { text:"Calmness of mind is one of the beautiful jewels of wisdom.", author:"Swami Vivekananda", source:"Hindu monk & philosopher, 19th century", tag:"On calm" },
+  { text:"Smile, breathe, and go slowly.", author:"Thich Nhat Hanh", source:"Vietnamese Zen Buddhist master", tag:"In this moment" },
+  { text:"You have power over your mind — not outside events. Realize this, and you will find strength.", author:"Marcus Aurelius", source:"Roman Emperor & Stoic philosopher, 2nd century AD", tag:"On control" },
+  { text:"Peace is not the absence of conflict; it is the ability to handle conflict by staying balanced.", author:"Sadhguru", source:"Indian yogi and mystic", tag:"On balance" },
+  { text:"Speak when you are angry and you will make the best speech you will ever regret.", author:"Ambrose Bierce", source:"American writer & satirist", tag:"On silence" },
+  { text:"For every minute you are angry, you lose sixty seconds of happiness.", author:"Ralph Waldo Emerson", source:"American philosopher & poet, 19th century", tag:"On time" },
+  { text:"Holding onto anger is like drinking poison and expecting the other person to die.", author:"The Buddha", source:"Founder of Buddhism, c. 5th century BCE", tag:"Let it go" },
+  { text:"The best fighter is never angry.", author:"Lao Tzu", source:"Ancient Chinese philosopher, Tao Te Ching", tag:"On strength" },
+  { text:"Between stimulus and response there is a space. In that space is our power to choose.", author:"Viktor Frankl", source:"Psychiatrist & Holocaust survivor", tag:"The pause" },
+  { text:"Whatever is begun in anger ends in shame.", author:"Benjamin Franklin", source:"American Founding Father & philosopher", tag:"On wisdom" },
+  { text:"He who angers you conquers you.", author:"Elizabeth Kenny", source:"Australian nurse & humanitarian", tag:"Stay free" },
+  { text:"The greatest remedy for anger is delay.", author:"Lucius Annaeus Seneca", source:"Roman Stoic philosopher, 1st century AD", tag:"Take a breath" },
+  { text:"If you are patient in one moment of anger, you will escape a hundred days of sorrow.", author:"Chinese Proverb", source:"Ancient wisdom tradition", tag:"Patience" },
+  { text:"When the mind is calm, the intelligence works at its highest capacity.", author:"Sadhguru", source:"Indian yogi and mystic", tag:"Clarity" },
+  { text:"When another person makes you suffer, it is because he suffers deeply himself.", author:"Thich Nhat Hanh", source:"Vietnamese Zen Buddhist master", tag:"On empathy" },
+  { text:"Anger is a wind which blows out the lamp of the mind.", author:"Robert G. Ingersoll", source:"American political leader & orator", tag:"Awareness" },
+  { text:"To be wronged is nothing unless you continue to remember it.", author:"Confucius", source:"Chinese philosopher, c. 551–479 BCE", tag:"Forgive" },
 ];
 
-const BUBBLE_WORDS = [
-  "Frustration","Let it go","This moment","Anger","Release","Breathe",
-  "Control","Peace","Flow","Forgive","This too\nshall pass","Calm",
-  "Let go","Move on","Strength","Balance","Clarity","Ease"
+const ALL_BUBBLE_WORDS = [
+  "Frustration","Resentment","Blame","Rage","Hurt","Injustice","Betrayal",
+  "Bitterness","Irritation","Grudge","Tension","Fury","Impatience","Spite",
+  "Envy","Hostility","Contempt","Discontent","Annoyance","Overwhelm",
+  "Disrespect","Powerlessness","Control","Anxiety","Pressure","Disappointment",
+  "Ego","Pride","Jealousy","Unheard","Disregard","Humiliation",
+  "Hopelessness","Exhaustion","Shame","Fear","Loneliness","Confusion",
+  "Sadness","Regret","Panic","Stress","Comparison","Criticism","Rejection"
 ];
 
 const BUBBLE_COLORS = [
-  "rgba(155,127,232,.45)","rgba(94,168,240,.45)",
-  "rgba(94,207,168,.45)","rgba(232,180,94,.45)",
-  "rgba(232,126,138,.4)","rgba(100,180,200,.4)"
+  "rgba(184,154,245,.52)","rgba(126,200,248,.50)",
+  "rgba(109,221,184,.48)","rgba(240,192,112,.46)",
+  "rgba(240,130,130,.46)","rgba(140,200,220,.46)",
+  "rgba(200,140,200,.46)","rgba(100,190,160,.46)"
 ];
 
-const ORB_PALETTES = {
-  0: { o1:"#9b7fe820", o2:"#5ea8f020", o3:"#9b7fe810" },
-  1: { o1:"#5ea8f025", o2:"#9b7fe815", o3:"#5ea8f010" },
-  2: { o1:"#5ecfa825", o2:"#3aaa8220", o3:"#5ecfa810" },
-  3: { o1:"#e8b45e25", o2:"#c48e3520", o3:"#e8b45e10" },
-  4: { o1:"#9b7fe820", o2:"#e8b45e20", o3:"#5ecfa810" },
-};
+const ORB_PALETTES = [
+  { o1:"#b89af540", o2:"#5ea8f030", o3:"#b89af520" },
+  { o1:"#7ec8f840", o2:"#b89af525", o3:"#7ec8f820" },
+  { o1:"#6dddb840", o2:"#3aaa8230", o3:"#6dddb818" },
+  { o1:"#f0c07040", o2:"#c48e3530", o3:"#f0c07018" },
+  { o1:"#b89af530", o2:"#f0c07030", o3:"#6dddb820" },
+];
 
 const MICRO_QUOTES = [
   "Anger is one letter short of danger.",
   "Between stimulus and response, there is a space.",
   "The wound is the place where the light enters you.",
-  "Peace begins with a smile.",
+  "Peace begins with a single breath.",
   "Still water reflects everything clearly.",
 ];
 
-/* ─── STATE ─── */
-let curScreen = 0;
-let breathePhase = 0;
-let breatheTimer = null;
-let popCount = 0;
-let wisdomIdx = 0;
-let wisdomPips = [];
+/* AUDIO */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playPop() {
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(560, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.14);
+    gain.gain.setValueAtTime(0.30, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.20);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.22);
+  } catch(e) {}
+}
 
-/* ─── NAVIGATION ─── */
+/* STATE */
+let curScreen = 0;
+let breathePhase = 0, breatheTimer = null, phaseRAF = null, phaseStartTime = null;
+let popCount = 0, totalSessionPops = 0;
+let wisdomIdx = 0, wisdomPips = [];
+let wordPool = [];
+let bubbleSpawnTimer = null;
+
+/* NAVIGATION */
 function goScreen(n) {
   document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i===n));
   document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', i===n));
   curScreen = n;
   setAmbient(n);
   if (n===1) startBreathe(); else stopBreathe();
-  document.getElementById('mq').textContent = MICRO_QUOTES[n % MICRO_QUOTES.length];
+  if (n===2) startBubbleSpawner(); else stopBubbleSpawner();
   if (n===4) updateProgressPops();
+  const mq = document.getElementById('mq');
+  if (mq) mq.textContent = MICRO_QUOTES[n % MICRO_QUOTES.length];
 }
 
 function setAmbient(n) {
   const p = ORB_PALETTES[n] || ORB_PALETTES[0];
-  const o1 = document.getElementById('orb1');
-  const o2 = document.getElementById('orb2');
-  const o3 = document.getElementById('orb3');
-  o1.style.background = p.o1; o1.style.opacity = 1;
-  o2.style.background = p.o2; o2.style.opacity = 1;
-  o3.style.background = p.o3; o3.style.opacity = 1;
+  [['orb1',p.o1],['orb2',p.o2],['orb3',p.o3]].forEach(([id,c]) => {
+    const el = document.getElementById(id);
+    el.style.backgroundColor = c; el.style.opacity = 1;
+  });
 }
 
-/* ─── CHECK-IN ─── */
-function selectAnger(el, idx) {
-  document.querySelectorAll('.anger-level').forEach(a => a.classList.remove('sel'));
-  el.classList.add('sel');
-}
-function toggleChip(el) { el.classList.toggle('sel'); }
+/* SCREEN 0 */
+function selectAnger(el) { document.querySelectorAll('.anger-level').forEach(a => a.classList.remove('sel')); el.classList.add('sel'); }
+function toggleChip(el)   { el.classList.toggle('sel'); }
 
-/* ─── BREATHE ─── */
-const PHASES = [
-  { name:"Inhale",  dur:4000  },
-  { name:"Hold",    dur:7000  },
-  { name:"Exhale",  dur:8000  },
-  { name:"Rest",    dur:1000  },
-];
-const ARC_CIRCUM = 2 * Math.PI * 125;
-document.getElementById('arc-fill').style.strokeDasharray = ARC_CIRCUM;
+/* SCREEN 1: BREATHE */
+const PHASES = [{name:"Inhale",dur:4000},{name:"Hold",dur:7000},{name:"Exhale",dur:8000},{name:"Rest",dur:1000}];
+const ARC_C = 2 * Math.PI * 124;
+const arcEl = document.getElementById('arc-fill');
+if (arcEl) arcEl.style.strokeDasharray = ARC_C;
 
-let phaseStartTime = null;
-let phaseRAF = null;
+function startBreathe() { breathePhase = 0; beginPhase(); }
+function stopBreathe()  { clearTimeout(breatheTimer); cancelAnimationFrame(phaseRAF); }
 
-function startBreathe() {
-  breathePhase = 0;
-  beginPhase();
-}
-function stopBreathe() {
-  clearTimeout(breatheTimer);
-  cancelAnimationFrame(phaseRAF);
-}
 function beginPhase() {
-  const p = breathePhase % 4;
-  const dur = PHASES[p].dur;
+  const p = breathePhase % 4, dur = PHASES[p].dur;
   document.getElementById('phase-name').textContent = PHASES[p].name;
-  for(let i=0;i<4;i++){
+  for (let i=0;i<4;i++) {
     document.getElementById('pp'+i).classList.toggle('active', i===p);
     document.getElementById('pl'+i).classList.toggle('active', i===p);
   }
-  // arc color
-  const arcColors = ['#5ea8f0','#9b7fe8','#5ecfa8','#e8b45e'];
+  const arcColors = ['#7ec8f8','#b89af5','#6dddb8','#f0c070'];
   document.getElementById('arc-fill').style.stroke = arcColors[p];
-
   phaseStartTime = performance.now();
-  animatePhase(p, dur);
-
-  breatheTimer = setTimeout(() => {
-    breathePhase++;
-    beginPhase();
-  }, dur);
+  animPhase(dur);
+  breatheTimer = setTimeout(() => { breathePhase++; beginPhase(); }, dur);
 }
-function animatePhase(p, dur) {
-  const el = document.getElementById('arc-fill');
-  const countEl = document.getElementById('phase-count');
-  const totalSec = dur / 1000;
+function animPhase(dur) {
+  const el = document.getElementById('arc-fill'), ct = document.getElementById('phase-count');
+  const tot = dur / 1000;
   function tick(now) {
-    const elapsed = now - phaseStartTime;
-    const t = Math.min(elapsed / dur, 1);
-    el.style.strokeDashoffset = ARC_CIRCUM * t;
-    const remaining = Math.ceil(totalSec * (1 - t));
-    countEl.textContent = remaining;
+    const t = Math.min((now - phaseStartTime) / dur, 1);
+    el.style.strokeDashoffset = ARC_C * t;
+    ct.textContent = Math.ceil(tot * (1 - t));
     if (t < 1) phaseRAF = requestAnimationFrame(tick);
   }
   phaseRAF = requestAnimationFrame(tick);
 }
 
-/* ─── RELEASE ─── */
-let totalSessionPops = 0;
+/* SCREEN 2: BUBBLE RELEASE */
+function refillPool() { wordPool = [...ALL_BUBBLE_WORDS].sort(() => Math.random() - .5); }
+refillPool();
+function nextWord() { if (!wordPool.length) refillPool(); return wordPool.pop(); }
 
-function onArenaTap(e) {
+function spawnIdleBubble() {
   const arena = document.getElementById('arena');
-  const hint  = document.getElementById('arena-hint');
-  hint.style.opacity = '0';
-  const rect = arena.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  if (!arena || curScreen !== 2) return;
+  if (arena.querySelectorAll('.bubble-idle').length >= 7) return;
 
-  // Ripple
-  const ripple = document.createElement('div');
-  ripple.className = 'ripple';
-  const rs = 60;
-  ripple.style.cssText = `width:${rs}px;height:${rs}px;left:${x-rs/2}px;top:${y-rs/2}px;border:1.5px solid rgba(94,207,168,.5);`;
-  arena.appendChild(ripple);
-  setTimeout(() => ripple.remove(), 800);
+  const size = 60 + Math.random() * 46;
+  const word = nextWord();
+  const color = BUBBLE_COLORS[Math.floor(Math.random() * BUBBLE_COLORS.length)];
+  const bobDur = 2.5 + Math.random() * 2.0;
+  const bobDelay = (Math.random() * -4).toFixed(2);
 
-  // Bubble
-  const size = 52 + Math.random() * 40;
-  const word = BUBBLE_WORDS[Math.floor(Math.random()*BUBBLE_WORDS.length)];
-  const color = BUBBLE_COLORS[Math.floor(Math.random()*BUBBLE_COLORS.length)];
-  const dur = 1.8 + Math.random() * 1.4;
-  const drift = (Math.random()-.5) * 60;
+  const maxX = Math.max(8, arena.clientWidth  - size - 8);
+  const maxY = Math.max(8, arena.clientHeight - size - 8);
+  const x = 8 + Math.random() * maxX;
+  const y = 8 + Math.random() * maxY;
 
   const b = document.createElement('div');
-  b.className = 'bubble';
+  b.className = 'bubble-idle';
+  b.dataset.word = word;
   b.textContent = word;
-  b.style.cssText = `
-    width:${size}px;height:${size}px;
-    left:${x-size/2}px;top:${y-size/2}px;
-    background:${color};
-    animation-duration:${dur}s;
-    animation-name:rise;
-    color:rgba(255,255,255,.8);
-    font-size:${size>72?11:9}px;
-    transform-origin:center bottom;
-  `;
-  b.style.setProperty('--drift', drift + 'px');
+  b.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;background:${color};animation-duration:${bobDur}s;animation-delay:${bobDelay}s;font-size:${size>85?11:9}px;`;
+  b.addEventListener('click', function(e) { e.stopPropagation(); popBubble(this, arena); });
   arena.appendChild(b);
-  setTimeout(() => b.remove(), dur*1000+100);
+  document.getElementById('arena-hint').style.opacity = '0';
+}
 
-  popCount++;
-  totalSessionPops++;
+function popBubble(el, arena) {
+  playPop();
+  const rect = el.getBoundingClientRect(), arect = arena.getBoundingClientRect();
+  const cx = rect.left - arect.left + rect.width / 2;
+  const cy = rect.top  - arect.top  + rect.height / 2;
+  const size = el.offsetWidth;
+  const word = el.dataset.word;
+  const color = el.style.background;
+  el.remove();
+
+  // Ripple
+  const rp = document.createElement('div');
+  rp.className = 'ripple-ring';
+  rp.style.cssText = `width:${size}px;height:${size}px;left:${cx-size/2}px;top:${cy-size/2}px;`;
+  arena.appendChild(rp);
+  setTimeout(() => rp.remove(), 800);
+
+  // Rising bubble
+  const dur = 1.7 + Math.random() * 1.1;
+  const rEl = document.createElement('div');
+  rEl.className = 'bubble-rising';
+  rEl.textContent = word;
+  rEl.style.cssText = `width:${size}px;height:${size}px;left:${cx-size/2}px;top:${cy-size/2}px;background:${color};animation-duration:${dur}s;font-size:${size>85?11:9}px;`;
+  arena.appendChild(rEl);
+  setTimeout(() => rEl.remove(), dur * 1000 + 100);
+
+  popCount++; totalSessionPops++;
   document.getElementById('pop-count').textContent = popCount;
-  const pct = Math.min(Math.round((popCount / 15) * 100), 100);
-  document.getElementById('calm-pct').textContent = pct + '%';
+  document.getElementById('calm-pct').textContent = Math.min(Math.round((popCount/12)*100), 100) + '%';
+  setTimeout(spawnIdleBubble, 700 + Math.random() * 500);
 }
 
-function updateProgressPops() {
-  const el = document.getElementById('total-pops');
-  el.textContent = 142 + totalSessionPops;
+function startBubbleSpawner() {
+  popCount = 0;
+  document.getElementById('pop-count').textContent = '0';
+  document.getElementById('calm-pct').textContent = '0%';
+  document.getElementById('arena-hint').style.opacity = '1';
+  const arena = document.getElementById('arena');
+  arena.querySelectorAll('.bubble-idle,.bubble-rising,.ripple-ring').forEach(b => b.remove());
+  for (let i=0; i<5; i++) setTimeout(spawnIdleBubble, i * 350);
+  bubbleSpawnTimer = setInterval(() => { if (curScreen === 2) spawnIdleBubble(); }, 2400);
 }
+function stopBubbleSpawner() { clearInterval(bubbleSpawnTimer); }
 
-/* ─── WISDOM ─── */
+/* SCREEN 3: WISDOM */
 (function buildWisdomNav() {
   const nav = document.getElementById('wisdom-nav');
-  WISDOMS.forEach((_, i) => {
+  WISDOMS.forEach((_,i) => {
     const b = document.createElement('button');
     b.className = 'wisdom-pip' + (i===0?' active':'');
     b.onclick = () => setWisdom(i);
@@ -1131,80 +608,42 @@ function updateProgressPops() {
 
 function setWisdom(i) {
   const card = document.getElementById('wcard');
-  card.style.opacity = '0';
-  card.style.transform = 'translateY(8px)';
+  card.style.opacity = '0'; card.style.transform = 'translateY(10px)';
   setTimeout(() => {
     wisdomIdx = i;
     document.getElementById('wisdom-body').textContent   = WISDOMS[i].text;
     document.getElementById('wisdom-author').textContent = WISDOMS[i].author;
     document.getElementById('wisdom-source').textContent = WISDOMS[i].source;
-    card.style.opacity = '1';
-    card.style.transform = 'translateY(0)';
-  }, 250);
+    document.getElementById('wisdom-tag').textContent    = WISDOMS[i].tag;
+    card.style.opacity = '1'; card.style.transform = 'translateY(0)';
+  }, 280);
   wisdomPips.forEach((p,j) => p.classList.toggle('active', j===i));
 }
 
-/* ─── PARTICLE CANVAS ─── */
-(function initParticles() {
-  const canvas = document.getElementById('particles');
-  const ctx    = canvas.getContext('2d');
-  const PARTICLE_COUNT = 55;
-  let W, H, particles = [];
+/* SCREEN 4 */
+function updateProgressPops() { const el = document.getElementById('total-pops'); if (el) el.textContent = 142 + totalSessionPops; }
 
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  class Particle {
+/* PARTICLES */
+(function() {
+  const canvas = document.getElementById('particles'), ctx = canvas.getContext('2d');
+  let W, H, pts = [];
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
+  class P {
     constructor() { this.reset(); }
-    reset() {
-      this.x  = Math.random() * W;
-      this.y  = Math.random() * H;
-      this.r  = .5 + Math.random() * 1.2;
-      this.vx = (Math.random() - .5) * .18;
-      this.vy = -.05 - Math.random() * .12;
-      this.a  = .1 + Math.random() * .35;
-      this.life = 0;
-      this.maxLife = 200 + Math.random() * 400;
-    }
-    update() {
-      this.x += this.vx;
-      this.y += this.vy;
-      this.life++;
-      if (this.y < -10 || this.life > this.maxLife) this.reset();
-    }
-    draw() {
-      const t = this.life / this.maxLife;
-      const a = this.a * Math.sin(t * Math.PI);
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(200,190,255,${a})`;
-      ctx.fill();
-    }
+    reset() { this.x=Math.random()*W; this.y=H+5; this.r=.4+Math.random()*1.1; this.vx=(Math.random()-.5)*.15; this.vy=-.04-Math.random()*.1; this.a=.12+Math.random()*.3; this.life=0; this.maxLife=300+Math.random()*500; }
+    update() { this.x+=this.vx; this.y+=this.vy; this.life++; if(this.y<-5||this.life>this.maxLife) this.reset(); }
+    draw() { const t=this.life/this.maxLife, a=this.a*Math.sin(t*Math.PI); ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle=`rgba(200,185,255,${a})`; ctx.fill(); }
   }
-
-  for (let i=0; i<PARTICLE_COUNT; i++) particles.push(new Particle());
-
-  function loop() {
-    ctx.clearRect(0,0,W,H);
-    particles.forEach(p => { p.update(); p.draw(); });
-    requestAnimationFrame(loop);
-  }
+  for(let i=0;i<60;i++){const p=new P();p.life=Math.random()*p.maxLife;pts.push(p);}
+  function loop(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.update();p.draw();});requestAnimationFrame(loop);}
   loop();
 })();
 
-/* ─── INIT ─── */
+/* INIT */
 setAmbient(0);
 document.getElementById('mq').textContent = MICRO_QUOTES[0];
-// Auto-rotate wisdom
-setInterval(() => {
-  if (curScreen === 3) {
-    setWisdom((wisdomIdx + 1) % WISDOMS.length);
-  }
-}, 8000);
+setInterval(() => { if (curScreen===3) setWisdom((wisdomIdx+1) % WISDOMS.length); }, 9000);
 </script>
 </body>
 </html>
