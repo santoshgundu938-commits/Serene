@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serene — Find Your Calm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0b0d12;
+    --surface:   #12151d;
+    --surface2:  #181c26;
+    --border:    rgba(255,255,255,0.07);
+    --text:      #e8e6df;
+    --muted:     rgba(232,230,223,0.45);
+    --faint:     rgba(232,230,223,0.18);
+
+    --purple:    #9b7fe8;
+    --purple-d:  #7c5dc7;
+    --blue:      #5ea8f0;
+    --blue-d:    #3a7ec4;
+    --green:     #5ecfa8;
+    --green-d:   #3aaa82;
+    --amber:     #e8b45e;
+    --amber-d:   #c48e35;
+    --rose:      #e87e8a;
+
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body:    'DM Sans', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* ─── LAYOUT ─── */
+  .app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ─── AMBIENT BACKGROUND ─── */
+  .ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0;
+    transition: opacity 1.2s ease, background 1.2s ease;
+  }
+  .orb1 { width: 600px; height: 600px; top: -200px; left: -200px; }
+  .orb2 { width: 500px; height: 500px; bottom: -150px; right: -100px; }
+  .orb3 { width: 300px; height: 300px; top: 40%; left: 50%; transform: translate(-50%,-50%); }
+
+  /* ─── SIDEBAR NAV ─── */
+  .sidebar {
+    flex: 0 0 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 0;
+    gap: 6px;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    z-index: 10;
+    position: relative;
+  }
+  .sidebar-logo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--purple);
+    margin-bottom: 20px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    letter-spacing: .12em;
+  }
+  .nav-btn {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s, transform .15s;
+    color: var(--muted);
+    font-size: 18px;
+    position: relative;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,.06); color: var(--text); transform: scale(1.08); }
+  .nav-btn.active { background: rgba(155,127,232,.15); color: var(--purple); }
+  .nav-btn .pip {
+    position: absolute;
+    right: 7px; top: 7px;
+    width: 6px; height: 6px;
+    border-radius: 3px;
+    background: var(--purple);
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .nav-btn.active .pip { opacity: 1; }
+  .nav-tip {
+    position: absolute;
+    left: 100%;
+    margin-left: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11px;
+    color: var(--text);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity .15s, transform .15s;
+    z-index: 100;
+  }
+  .nav-btn:hover .nav-tip { opacity: 1; transform: translateX(0); }
+
+  /* ─── MAIN CONTENT ─── */
+  .main {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 60px;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1);
+    pointer-events: none;
+    overflow-y: auto;
+  }
+  .screen.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+
+  /* ─── TYPOGRAPHY ─── */
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .eyebrow::before, .eyebrow::after {
+    content: '';
+    display: block;
+    height: 1px;
+    width: 28px;
+    background: currentColor;
+    opacity: .4;
+  }
+  .display-title {
+    font-family: var(--font-display);
+    font-size: clamp(42px, 6vw, 72px);
+    font-weight: 300;
+    line-height: 1.05;
+    text-align: center;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  .display-title em { font-style: italic; }
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.7;
+    max-width: 380px;
+    margin-bottom: 36px;
+  }
+
+  /* ─── ENTRY SCREEN ─── */
+  .anger-grid {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .anger-level {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .anger-orb {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    border: 1.5px solid transparent;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    position: relative;
+  }
+  .anger-level:hover .anger-orb { transform: scale(1.12); }
+  .anger-level.sel .anger-orb {
+    border-color: rgba(255,255,255,.5);
+    box-shadow: 0 0 24px rgba(255,255,255,.12);
+    transform: scale(1.15);
+  }
+  .anger-orb-label { font-size: 10px; color: var(--faint); transition: color .2s; }
+  .anger-level.sel .anger-orb-label { color: var(--muted); }
+
+  .ao1 { background: radial-gradient(circle at 40% 40%, #5ecfa820, #3aaa8210); }
+  .ao2 { background: radial-gradient(circle at 40% 40%, #e8b45e20, #c48e3510); }
+  .ao3 { background: radial-gradient(circle at 40% 40%, #e89b5e20, #c4703510); }
+  .ao4 { background: radial-gradient(circle at 40% 40%, #e87e5e20, #c4503510); }
+  .ao5 { background: radial-gradient(circle at 40% 40%, #e85e6820, #c4353510); }
+
+  .trigger-chips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center;
+    max-width: 440px;
+    margin-bottom: 36px;
+  }
+  .chip {
+    padding: 7px 16px;
+    border-radius: 100px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .18s;
+    color: var(--muted);
+    background: transparent;
+  }
+  .chip:hover { border-color: rgba(255,255,255,.2); color: var(--text); background: rgba(255,255,255,.04); }
+  .chip.sel { border-color: var(--purple); color: var(--purple); background: rgba(155,127,232,.1); }
+
+  .primary-btn {
+    padding: 15px 42px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    border: none;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .2s, opacity .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .primary-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background .15s;
+  }
+  .primary-btn:hover { transform: translateY(-2px); }
+  .primary-btn:hover::after { background: rgba(255,255,255,.06); }
+  .primary-btn:active { transform: translateY(0); }
+  .btn-purple-grad { background: linear-gradient(135deg, var(--purple) 0%, var(--purple-d) 100%); color: #fff; box-shadow: 0 8px 32px rgba(155,127,232,.3); }
+  .btn-blue-grad   { background: linear-gradient(135deg, var(--blue)   0%, var(--blue-d)   100%); color: #fff; box-shadow: 0 8px 32px rgba(94,168,240,.3); }
+  .btn-green-grad  { background: linear-gradient(135deg, var(--green)  0%, var(--green-d)  100%); color: #fff; box-shadow: 0 8px 32px rgba(94,207,168,.3); }
+  .btn-amber-grad  { background: linear-gradient(135deg, var(--amber)  0%, var(--amber-d)  100%); color: #fff; box-shadow: 0 8px 32px rgba(232,180,94,.3); }
+
+  /* ─── BREATHE SCREEN ─── */
+  @keyframes breathePulse {
+    0%, 100% { transform: scale(1);   opacity: .6; }
+    50%       { transform: scale(1.2); opacity: 1;  }
+  }
+  @keyframes breatheCore {
+    0%, 100% { transform: scale(1);   }
+    50%       { transform: scale(1.15); }
+  }
+  @keyframes countdown {
+    from { stroke-dashoffset: 0; }
+    to   { stroke-dashoffset: 283; }
+  }
+
+  .breathe-stage {
+    position: relative;
+    width: 280px; height: 280px;
+    margin: 0 auto 36px;
+  }
+  .breathe-ring {
+    position: absolute;
+    border-radius: 50%;
+    animation: breathePulse 4s ease-in-out infinite;
+    border: 1px solid;
+  }
+  .br1 { inset: 0;    border-color: rgba(94,168,240,.5);  animation-delay: 0s; }
+  .br2 { inset: 22px; border-color: rgba(94,168,240,.35); animation-delay: .15s; }
+  .br3 { inset: 44px; border-color: rgba(94,168,240,.2);  animation-delay: .3s; }
+  .br4 { inset: 66px; border-color: rgba(94,168,240,.12); animation-delay: .45s; }
+  .breathe-center {
+    position: absolute;
+    inset: 88px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(94,168,240,.12), transparent 70%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    animation: breatheCore 4s ease-in-out infinite;
+  }
+  .breathe-phase-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--blue);
+    letter-spacing: .04em;
+  }
+  .breathe-count {
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1;
+    margin-top: 2px;
+  }
+  .breathe-arc {
+    position: absolute;
+    inset: 0;
+  }
+  .arc-track { fill: none; stroke: rgba(255,255,255,.06); stroke-width: 2; }
+  .arc-fill {
+    fill: none;
+    stroke: var(--blue);
+    stroke-width: 2;
+    stroke-dasharray: 800;
+    stroke-dashoffset: 800;
+    stroke-linecap: round;
+    transition: stroke-dashoffset .1s linear, stroke .5s;
+  }
+
+  .phase-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .phase-pill {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.1);
+    overflow: hidden;
+  }
+  .phase-pill.active { background: var(--blue); }
+  .phase-labels-row {
+    display: flex;
+    justify-content: space-between;
+    width: 340px;
+    max-width: 100%;
+    margin-bottom: 28px;
+  }
+  .phase-lbl-item { font-size: 10px; color: var(--faint); letter-spacing: .06em; }
+  .phase-lbl-item.active { color: var(--blue); }
+
+  .tip-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    max-width: 380px;
+    margin-bottom: 32px;
+  }
+  .tip-label { font-size: 9px; text-transform: uppercase; letter-spacing: .14em; color: var(--faint); margin-bottom: 6px; }
+  .tip-text  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ─── RELEASE SCREEN ─── */
+  @keyframes rise {
+    0%   { transform: translateY(0)   scale(1);    opacity: .95; }
+    85%  { opacity: .6; }
+    100% { transform: translateY(-400px) scale(.25); opacity: 0; }
+  }
+  @keyframes popBurst {
+    0%   { transform: scale(1);    opacity: 1; }
+    40%  { transform: scale(1.4);  opacity: .6; }
+    100% { transform: scale(0);    opacity: 0; }
+  }
+
+  .release-arena {
+    width: min(560px, 90vw);
+    height: 320px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    background: radial-gradient(ellipse at 50% 100%, rgba(94,207,168,.06), transparent 60%);
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    margin-bottom: 16px;
+  }
+  .arena-hint {
+    position: absolute;
+    inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px;
+    pointer-events: none;
+    transition: opacity .4s;
+  }
+  .arena-hint-icon {
+    font-size: 40px;
+    opacity: .25;
+    animation: breathePulse 3s ease-in-out infinite;
+  }
+  .arena-hint-text { font-size: 12px; color: var(--faint); letter-spacing: .06em; }
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.2;
+    padding: 8px;
+    cursor: pointer;
+    animation: rise linear forwards;
+    border: 1px solid rgba(255,255,255,.12);
+    transition: transform .1s;
+    user-select: none;
+  }
+  .bubble:hover { filter: brightness(1.15); }
+
+  .release-stats {
+    display: flex; gap: 32px;
+    margin-bottom: 28px;
+  }
+  .rel-stat { text-align: center; }
+  .rel-stat-num { font-family: var(--font-display); font-size: 32px; font-weight: 300; line-height: 1; }
+  .rel-stat-lbl { font-size: 10px; color: var(--faint); letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
+
+  /* ─── WISDOM SCREEN ─── */
+  .wisdom-stage {
+    max-width: 600px;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+  .wisdom-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 40px;
+    position: relative;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: opacity .4s, transform .4s;
+  }
+  .wisdom-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    pointer-events: none;
+  }
+  .wisdom-quote-mark {
+    font-family: var(--font-display);
+    font-size: 80px;
+    color: var(--amber);
+    opacity: .18;
+    line-height: .6;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .wisdom-text {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.45;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .wisdom-divider {
+    width: 40px; height: 1px;
+    background: var(--amber);
+    opacity: .4;
+    margin-bottom: 14px;
+  }
+  .wisdom-author { font-size: 12px; color: var(--amber); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; }
+  .wisdom-source { font-size: 11px; color: var(--faint); margin-top: 4px; font-style: italic; }
+
+  .wisdom-nav {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .wisdom-pip {
+    width: 8px; height: 8px;
+    border-radius: 4px;
+    background: var(--faint);
+    cursor: pointer;
+    transition: background .2s, width .2s;
+    border: none;
+  }
+  .wisdom-pip.active { background: var(--amber); width: 24px; }
+
+  /* ─── STREAK SCREEN ─── */
+  @keyframes orbitSpin { to { transform: rotate(360deg); } }
+  @keyframes popIn     { 0% { transform: scale(0) rotate(-8deg); opacity: 0; } 70% { transform: scale(1.08) rotate(2deg); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+  @keyframes countUp   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .streak-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 36px;
+  }
+  .streak-ring-wrap {
+    position: relative;
+    width: 160px; height: 160px;
+    margin-bottom: 20px;
+    animation: popIn .6s cubic-bezier(.3,.8,.3,1.2) both;
+  }
+  .streak-orbit {
+    position: absolute;
+    inset: -16px;
+    border-radius: 50%;
+    border: 1px dashed rgba(232,180,94,.2);
+    animation: orbitSpin 18s linear infinite;
+  }
+  .streak-orbit::after {
+    content: '';
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--amber);
+    top: 50%;
+    right: -4px;
+    transform: translateY(-50%);
+    box-shadow: 0 0 12px var(--amber);
+  }
+  .streak-inner {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(232,180,94,.18), rgba(232,180,94,.05) 60%);
+    border: 1px solid rgba(232,180,94,.25);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .streak-number {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--amber);
+    animation: countUp .5s .3s both;
+  }
+  .streak-unit {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: rgba(232,180,94,.7);
+    margin-top: 2px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: min(600px, 90vw);
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 12px;
+    text-align: center;
+    transition: border-color .2s, background .2s;
+  }
+  .stat-card:hover { border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.03); }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+    animation: countUp .5s both;
+  }
+  .stat-lbl { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; margin-top: 6px; }
+
+  .badges-row {
+    display: flex; gap: 14px;
+    margin-bottom: 28px;
+  }
+  .badge {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+    cursor: pointer;
+  }
+  .badge-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    border: 1px solid rgba(255,255,255,.1);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .badge:hover .badge-icon { transform: scale(1.1); }
+  .badge-name { font-size: 10px; color: var(--faint); text-align: center; }
+
+  /* ─── MICRO QUOTE FOOTER ─── */
+  .micro-quote {
+    position: fixed;
+    bottom: 20px;
+    left: 50%; transform: translateX(-50%);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-style: italic;
+    color: var(--faint);
+    text-align: center;
+    pointer-events: none;
+    z-index: 5;
+    transition: opacity .5s;
+    white-space: nowrap;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ─── TOAST ─── */
+  @keyframes toastIn  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+  .toast {
+    position: fixed;
+    bottom: 52px;
+    left: 50%; transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 10px 20px;
+    font-size: 12px;
+    color: var(--text);
+    z-index: 100;
+    animation: toastIn .3s ease, toastOut .3s ease 2.5s forwards;
+    pointer-events: none;
+  }
+
+  /* ─── PARTICLE CANVAS ─── */
+  #particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: .4;
+  }
+
+  /* ─── RIPPLE ─── */
+  @keyframes rippleOut {
+    0%   { transform: scale(0);   opacity: .6; }
+    100% { transform: scale(3.5); opacity: 0; }
+  }
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: rippleOut .8s ease forwards;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div class="ambient">
+  <div class="orb orb1" id="orb1"></div>
+  <div class="orb orb2" id="orb2"></div>
+  <div class="orb orb3" id="orb3"></div>
+</div>
+
+<div class="app">
+
+  <!-- ─── SIDEBAR ─── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">Serene</div>
+
+    <button class="nav-btn active" id="nb0" onclick="goScreen(0)" title="">
+      ☁
+      <div class="pip"></div>
+      <span class="nav-tip">Check-in</span>
+    </button>
+    <button class="nav-btn" id="nb1" onclick="goScreen(1)" title="">
+      ◎
+      <div class="pip"></div>
+      <span class="nav-tip">Breathe</span>
+    </button>
+    <button class="nav-btn" id="nb2" onclick="goScreen(2)" title="">
+      ◉
+      <div class="pip"></div>
+      <span class="nav-tip">Release</span>
+    </button>
+    <button class="nav-btn" id="nb3" onclick="goScreen(3)" title="">
+      ✦
+      <div class="pip"></div>
+      <span class="nav-tip">Wisdom</span>
+    </button>
+    <button class="nav-btn" id="nb4" onclick="goScreen(4)" title="">
+      ◈
+      <div class="pip"></div>
+      <span class="nav-tip">Progress</span>
+    </button>
+  </nav>
+
+  <!-- ─── MAIN ─── -->
+  <main class="main">
+
+    <!-- ══ SCREEN 0: CHECK-IN ══ -->
+    <section class="screen active" id="s0">
+      <div class="eyebrow" style="color:var(--purple)">Welcome back</div>
+      <h1 class="display-title">How are you <em>feeling</em><br>right now?</h1>
+      <p class="subtitle">There's no judgment here. Let's understand what you're experiencing so we can help.</p>
+
+      <div class="anger-grid">
+        <div class="anger-level" onclick="selectAnger(this,0)">
+          <div class="anger-orb ao1">😤</div>
+          <span class="anger-orb-label">Annoyed</span>
+        </div>
+        <div class="anger-level" onclick="selectAnger(this,1)">
+          <div class="anger-orb ao2">😠</div>
+          <span class="anger-orb-label">Irritated</span>
+        </div>
+        <div class="anger-level sel" onclick="selectAnger(this,2)">
+          <div class="anger-orb ao3">😡</div>
+          <span class="anger-orb-label">Angry</span>
+        </div>
+        <div class="anger-level" onclick="selectAnger(this,3)">
+          <div class="anger-orb ao4">🤬</div>
+          <span class="anger-orb-label">Furious</span>
+        </div>
+        <div class="anger-level" onclick="selectAnger(this,4)">
+          <div class="anger-orb ao5">💢</div>
+          <span class="anger-orb-label">Explosive</span>
+        </div>
+      </div>
+
+      <p style="font-size:11px;color:var(--faint);margin-bottom:12px;letter-spacing:.06em;text-transform:uppercase">What triggered you?</p>
+      <div class="trigger-chips" id="trigger-chips">
+        <div class="chip" onclick="toggleChip(this)">Someone's behaviour</div>
+        <div class="chip sel" onclick="toggleChip(this)">Work / deadlines</div>
+        <div class="chip" onclick="toggleChip(this)">Traffic or waiting</div>
+        <div class="chip" onclick="toggleChip(this)">Injustice</div>
+        <div class="chip" onclick="toggleChip(this)">Family conflict</div>
+        <div class="chip" onclick="toggleChip(this)">Financial stress</div>
+        <div class="chip" onclick="toggleChip(this)">Something else</div>
+      </div>
+
+      <button class="primary-btn btn-purple-grad" onclick="goScreen(1)">
+        Begin calming journey &rarr;
+      </button>
+    </section>
+
+    <!-- ══ SCREEN 1: BREATHE ══ -->
+    <section class="screen" id="s1">
+      <div class="eyebrow" style="color:var(--blue)">Step 1 of 3</div>
+      <h1 class="display-title">Let your breath<br><em>lead the way.</em></h1>
+
+      <div class="breathe-stage">
+        <div class="breathe-ring br1"></div>
+        <div class="breathe-ring br2"></div>
+        <div class="breathe-ring br3"></div>
+        <div class="breathe-ring br4"></div>
+        <svg class="breathe-arc" viewBox="0 0 280 280">
+          <circle class="arc-track" cx="140" cy="140" r="125"/>
+          <circle class="arc-fill" id="arc-fill" cx="140" cy="140" r="125" transform="rotate(-90 140 140)"/>
+        </svg>
+        <div class="breathe-center">
+          <div class="breathe-phase-name" id="phase-name">Inhale</div>
+          <div class="breathe-count" id="phase-count">4</div>
+        </div>
+      </div>
+
+      <div class="phase-row" style="width:340px;max-width:90vw">
+        <div class="phase-pill active" id="pp0"></div>
+        <div class="phase-pill" id="pp1"></div>
+        <div class="phase-pill" id="pp2"></div>
+        <div class="phase-pill" id="pp3"></div>
+      </div>
+      <div class="phase-labels-row">
+        <span class="phase-lbl-item active" id="pl0">Inhale · 4s</span>
+        <span class="phase-lbl-item" id="pl1">Hold · 7s</span>
+        <span class="phase-lbl-item" id="pl2">Exhale · 8s</span>
+        <span class="phase-lbl-item" id="pl3">Rest · 1s</span>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-label">Why 4-7-8?</div>
+        <div class="tip-text">The extended exhale activates your parasympathetic nervous system — the body's natural brake for stress. Within 90 seconds, cortisol drops and your heart rate slows.</div>
+      </div>
+
+      <button class="primary-btn btn-blue-grad" onclick="goScreen(2)">
+        I feel calmer &rarr; release anger
+      </button>
+    </section>
+
+    <!-- ══ SCREEN 2: RELEASE ══ -->
+    <section class="screen" id="s2">
+      <div class="eyebrow" style="color:var(--green)">Step 2 of 3</div>
+      <h1 class="display-title">Tap to set<br><em>it free.</em></h1>
+      <p class="subtitle">Each bubble holds one angry thought. Tap it — watch it float away and disappear.</p>
+
+      <div class="release-arena" id="arena" onclick="onArenaTap(event)">
+        <div class="arena-hint" id="arena-hint">
+          <div class="arena-hint-icon">💭</div>
+          <div class="arena-hint-text">CLICK ANYWHERE TO RELEASE</div>
+        </div>
+      </div>
+
+      <div class="release-stats">
+        <div class="rel-stat">
+          <div class="rel-stat-num" id="pop-count" style="color:var(--green)">0</div>
+          <div class="rel-stat-lbl">thoughts released</div>
+        </div>
+        <div class="rel-stat">
+          <div class="rel-stat-num" id="calm-pct" style="color:var(--blue)">0%</div>
+          <div class="rel-stat-lbl">calmer than before</div>
+        </div>
+      </div>
+
+      <button class="primary-btn btn-green-grad" onclick="goScreen(3)">
+        I feel lighter &rarr; receive wisdom
+      </button>
+    </section>
+
+    <!-- ══ SCREEN 3: WISDOM ══ -->
+    <section class="screen" id="s3">
+      <div class="eyebrow" style="color:var(--amber)">Step 3 of 3</div>
+      <h1 class="display-title">Timeless words<br><em>for this moment.</em></h1>
+
+      <div class="wisdom-stage">
+        <div class="wisdom-card" id="wcard">
+          <span class="wisdom-quote-mark">"</span>
+          <p class="wisdom-text" id="wisdom-body">Do not let the behavior of others destroy your inner peace.</p>
+          <div class="wisdom-divider"></div>
+          <div class="wisdom-author" id="wisdom-author">Dalai Lama</div>
+          <div class="wisdom-source" id="wisdom-source">Buddhist spiritual leader &amp; Nobel Peace laureate</div>
+        </div>
+
+        <div class="wisdom-nav" id="wisdom-nav"></div>
+      </div>
+
+      <button class="primary-btn btn-amber-grad" onclick="goScreen(4)">
+        I am at peace &rarr; see my growth
+      </button>
+    </section>
+
+    <!-- ══ SCREEN 4: PROGRESS ══ -->
+    <section class="screen" id="s4">
+      <div class="eyebrow" style="color:var(--amber)">Your journey</div>
+      <h1 class="display-title">Another storm<br><em>navigated.</em></h1>
+
+      <div class="streak-hero">
+        <div class="streak-ring-wrap">
+          <div class="streak-orbit"></div>
+          <div class="streak-inner">
+            <div class="streak-number">7</div>
+            <div class="streak-unit">day streak</div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--muted);text-align:center;max-width:300px;line-height:1.6">Seven consecutive days of choosing calm over reaction. That is wisdom in practice.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--purple);animation-delay:.1s">23</div>
+          <div class="stat-lbl">sessions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--green);animation-delay:.2s">84%</div>
+          <div class="stat-lbl">de-escalated</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--blue);animation-delay:.3s" id="total-pops">142</div>
+          <div class="stat-lbl">thoughts released</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--amber);animation-delay:.4s">3</div>
+          <div class="stat-lbl">badges earned</div>
+        </div>
+      </div>
+
+      <div class="badges-row">
+        <div class="badge">
+          <div class="badge-icon" style="background:radial-gradient(circle,rgba(232,180,94,.18),rgba(232,180,94,.05));border-color:rgba(232,180,94,.25)">🌊</div>
+          <div class="badge-name">First calm</div>
+        </div>
+        <div class="badge">
+          <div class="badge-icon" style="background:radial-gradient(circle,rgba(155,127,232,.18),rgba(155,127,232,.05));border-color:rgba(155,127,232,.25)">🔥</div>
+          <div class="badge-name">7-day fire</div>
+        </div>
+        <div class="badge">
+          <div class="badge-icon" style="background:radial-gradient(circle,rgba(94,207,168,.18),rgba(94,207,168,.05));border-color:rgba(94,207,168,.25)">🌿</div>
+          <div class="badge-name">Inner peace</div>
+        </div>
+        <div class="badge">
+          <div class="badge-icon" style="background:rgba(255,255,255,.04);opacity:.4">🔒</div>
+          <div class="badge-name">30-day sage</div>
+        </div>
+        <div class="badge">
+          <div class="badge-icon" style="background:rgba(255,255,255,.04);opacity:.4">🔒</div>
+          <div class="badge-name">Zen master</div>
+        </div>
+      </div>
+
+      <button class="primary-btn btn-purple-grad" onclick="goScreen(0)">
+        Begin a new session
+      </button>
+    </section>
+
+  </main>
+</div>
+
+<div class="micro-quote" id="mq"></div>
+
+<script>
+/* ─── DATA ─── */
+const WISDOMS = [
+  { text: "Do not let the behavior of others destroy your inner peace.", author: "Dalai Lama", source: "Buddhist spiritual leader & Nobel Peace laureate" },
+  { text: "Calmness of mind is one of the beautiful jewels of wisdom.", author: "Swami Vivekananda", source: "Hindu monk & philosopher, 19th century" },
+  { text: "Smile, breathe, and go slowly.", author: "Thich Nhat Hanh", source: "Vietnamese Zen Buddhist master" },
+  { text: "You have power over your mind — not outside events. Realize this, and you will find strength.", author: "Marcus Aurelius", source: "Roman Emperor & Stoic philosopher, 2nd century AD" },
+  { text: "Peace is not the absence of conflict; it is the ability to handle conflict by staying balanced.", author: "Sadhguru", source: "Indian yogi and mystic" },
+  { text: "When another person makes you suffer, it is because he suffers deeply himself.", author: "Thich Nhat Hanh", source: "Vietnamese Zen Buddhist master" },
+];
+
+const BUBBLE_WORDS = [
+  "Frustration","Let it go","This moment","Anger","Release","Breathe",
+  "Control","Peace","Flow","Forgive","This too\nshall pass","Calm",
+  "Let go","Move on","Strength","Balance","Clarity","Ease"
+];
+
+const BUBBLE_COLORS = [
+  "rgba(155,127,232,.45)","rgba(94,168,240,.45)",
+  "rgba(94,207,168,.45)","rgba(232,180,94,.45)",
+  "rgba(232,126,138,.4)","rgba(100,180,200,.4)"
+];
+
+const ORB_PALETTES = {
+  0: { o1:"#9b7fe820", o2:"#5ea8f020", o3:"#9b7fe810" },
+  1: { o1:"#5ea8f025", o2:"#9b7fe815", o3:"#5ea8f010" },
+  2: { o1:"#5ecfa825", o2:"#3aaa8220", o3:"#5ecfa810" },
+  3: { o1:"#e8b45e25", o2:"#c48e3520", o3:"#e8b45e10" },
+  4: { o1:"#9b7fe820", o2:"#e8b45e20", o3:"#5ecfa810" },
+};
+
+const MICRO_QUOTES = [
+  "Anger is one letter short of danger.",
+  "Between stimulus and response, there is a space.",
+  "The wound is the place where the light enters you.",
+  "Peace begins with a smile.",
+  "Still water reflects everything clearly.",
+];
+
+/* ─── STATE ─── */
+let curScreen = 0;
+let breathePhase = 0;
+let breatheTimer = null;
+let popCount = 0;
+let wisdomIdx = 0;
+let wisdomPips = [];
+
+/* ─── NAVIGATION ─── */
+function goScreen(n) {
+  document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i===n));
+  document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', i===n));
+  curScreen = n;
+  setAmbient(n);
+  if (n===1) startBreathe(); else stopBreathe();
+  document.getElementById('mq').textContent = MICRO_QUOTES[n % MICRO_QUOTES.length];
+  if (n===4) updateProgressPops();
+}
+
+function setAmbient(n) {
+  const p = ORB_PALETTES[n] || ORB_PALETTES[0];
+  const o1 = document.getElementById('orb1');
+  const o2 = document.getElementById('orb2');
+  const o3 = document.getElementById('orb3');
+  o1.style.background = p.o1; o1.style.opacity = 1;
+  o2.style.background = p.o2; o2.style.opacity = 1;
+  o3.style.background = p.o3; o3.style.opacity = 1;
+}
+
+/* ─── CHECK-IN ─── */
+function selectAnger(el, idx) {
+  document.querySelectorAll('.anger-level').forEach(a => a.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function toggleChip(el) { el.classList.toggle('sel'); }
+
+/* ─── BREATHE ─── */
+const PHASES = [
+  { name:"Inhale",  dur:4000  },
+  { name:"Hold",    dur:7000  },
+  { name:"Exhale",  dur:8000  },
+  { name:"Rest",    dur:1000  },
+];
+const ARC_CIRCUM = 2 * Math.PI * 125;
+document.getElementById('arc-fill').style.strokeDasharray = ARC_CIRCUM;
+
+let phaseStartTime = null;
+let phaseRAF = null;
+
+function startBreathe() {
+  breathePhase = 0;
+  beginPhase();
+}
+function stopBreathe() {
+  clearTimeout(breatheTimer);
+  cancelAnimationFrame(phaseRAF);
+}
+function beginPhase() {
+  const p = breathePhase % 4;
+  const dur = PHASES[p].dur;
+  document.getElementById('phase-name').textContent = PHASES[p].name;
+  for(let i=0;i<4;i++){
+    document.getElementById('pp'+i).classList.toggle('active', i===p);
+    document.getElementById('pl'+i).classList.toggle('active', i===p);
+  }
+  // arc color
+  const arcColors = ['#5ea8f0','#9b7fe8','#5ecfa8','#e8b45e'];
+  document.getElementById('arc-fill').style.stroke = arcColors[p];
+
+  phaseStartTime = performance.now();
+  animatePhase(p, dur);
+
+  breatheTimer = setTimeout(() => {
+    breathePhase++;
+    beginPhase();
+  }, dur);
+}
+function animatePhase(p, dur) {
+  const el = document.getElementById('arc-fill');
+  const countEl = document.getElementById('phase-count');
+  const totalSec = dur / 1000;
+  function tick(now) {
+    const elapsed = now - phaseStartTime;
+    const t = Math.min(elapsed / dur, 1);
+    el.style.strokeDashoffset = ARC_CIRCUM * t;
+    const remaining = Math.ceil(totalSec * (1 - t));
+    countEl.textContent = remaining;
+    if (t < 1) phaseRAF = requestAnimationFrame(tick);
+  }
+  phaseRAF = requestAnimationFrame(tick);
+}
+
+/* ─── RELEASE ─── */
+let totalSessionPops = 0;
+
+function onArenaTap(e) {
+  const arena = document.getElementById('arena');
+  const hint  = document.getElementById('arena-hint');
+  hint.style.opacity = '0';
+  const rect = arena.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // Ripple
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  const rs = 60;
+  ripple.style.cssText = `width:${rs}px;height:${rs}px;left:${x-rs/2}px;top:${y-rs/2}px;border:1.5px solid rgba(94,207,168,.5);`;
+  arena.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 800);
+
+  // Bubble
+  const size = 52 + Math.random() * 40;
+  const word = BUBBLE_WORDS[Math.floor(Math.random()*BUBBLE_WORDS.length)];
+  const color = BUBBLE_COLORS[Math.floor(Math.random()*BUBBLE_COLORS.length)];
+  const dur = 1.8 + Math.random() * 1.4;
+  const drift = (Math.random()-.5) * 60;
+
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.textContent = word;
+  b.style.cssText = `
+    width:${size}px;height:${size}px;
+    left:${x-size/2}px;top:${y-size/2}px;
+    background:${color};
+    animation-duration:${dur}s;
+    animation-name:rise;
+    color:rgba(255,255,255,.8);
+    font-size:${size>72?11:9}px;
+    transform-origin:center bottom;
+  `;
+  b.style.setProperty('--drift', drift + 'px');
+  arena.appendChild(b);
+  setTimeout(() => b.remove(), dur*1000+100);
+
+  popCount++;
+  totalSessionPops++;
+  document.getElementById('pop-count').textContent = popCount;
+  const pct = Math.min(Math.round((popCount / 15) * 100), 100);
+  document.getElementById('calm-pct').textContent = pct + '%';
+}
+
+function updateProgressPops() {
+  const el = document.getElementById('total-pops');
+  el.textContent = 142 + totalSessionPops;
+}
+
+/* ─── WISDOM ─── */
+(function buildWisdomNav() {
+  const nav = document.getElementById('wisdom-nav');
+  WISDOMS.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.className = 'wisdom-pip' + (i===0?' active':'');
+    b.onclick = () => setWisdom(i);
+    nav.appendChild(b);
+    wisdomPips.push(b);
+  });
+})();
+
+function setWisdom(i) {
+  const card = document.getElementById('wcard');
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(8px)';
+  setTimeout(() => {
+    wisdomIdx = i;
+    document.getElementById('wisdom-body').textContent   = WISDOMS[i].text;
+    document.getElementById('wisdom-author').textContent = WISDOMS[i].author;
+    document.getElementById('wisdom-source').textContent = WISDOMS[i].source;
+    card.style.opacity = '1';
+    card.style.transform = 'translateY(0)';
+  }, 250);
+  wisdomPips.forEach((p,j) => p.classList.toggle('active', j===i));
+}
+
+/* ─── PARTICLE CANVAS ─── */
+(function initParticles() {
+  const canvas = document.getElementById('particles');
+  const ctx    = canvas.getContext('2d');
+  const PARTICLE_COUNT = 55;
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x  = Math.random() * W;
+      this.y  = Math.random() * H;
+      this.r  = .5 + Math.random() * 1.2;
+      this.vx = (Math.random() - .5) * .18;
+      this.vy = -.05 - Math.random() * .12;
+      this.a  = .1 + Math.random() * .35;
+      this.life = 0;
+      this.maxLife = 200 + Math.random() * 400;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.life++;
+      if (this.y < -10 || this.life > this.maxLife) this.reset();
+    }
+    draw() {
+      const t = this.life / this.maxLife;
+      const a = this.a * Math.sin(t * Math.PI);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(200,190,255,${a})`;
+      ctx.fill();
+    }
+  }
+
+  for (let i=0; i<PARTICLE_COUNT; i++) particles.push(new Particle());
+
+  function loop() {
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ─── INIT ─── */
+setAmbient(0);
+document.getElementById('mq').textContent = MICRO_QUOTES[0];
+// Auto-rotate wisdom
+setInterval(() => {
+  if (curScreen === 3) {
+    setWisdom((wisdomIdx + 1) % WISDOMS.length);
+  }
+}, 8000);
+</script>
+</body>
+</html>
